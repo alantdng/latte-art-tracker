@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Lattes - Latte'd</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <h1 class="logo">Latte'd</h1>
+      <nav class="nav-tabs">
+        <a href="index.html" class="nav-tab">Feed</a>
+        <a href="my-lattes.html" class="nav-tab active">My Lattes</a>
+      </nav>
+      <div class="hamburger-wrapper">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <!-- Hamburger Menu Dropdown -->
+        <div id="hamburger-menu" class="hamburger-menu hidden">
+          <a href="profile.html" class="menu-item">Profile & Settings</a>
+          <a href="notifications.html" class="menu-item">
+            Notifications
+            <span id="menu-notif-badge" class="menu-notif-badge hidden"></span>
+          </a>
+          <a href="my-lattes.html" class="menu-item active">My Lattes</a>
+          <a href="index.html" class="menu-item">Community Feed</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div id="gallery-grid" class="gallery-grid"></div>
+
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">☕</div>
+      <h2>No latte art yet</h2>
+      <p>Start tracking your latte art journey by adding your first entry.</p>
+      <a href="entry.html" class="btn btn-primary btn-large">Add Your First Latte</a>
+    </div>
+  </main>
+
+  <a href="entry.html" class="fab" aria-label="Add new entry">+</a>
+
+  <script src="js/storage.js"></script>
+  <script src="js/gallery.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Entry - Latte'd</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="index.html" class="back-link">← Back</a>
+      <h1 class="page-title">New Entry</h1>
+      <div class="hamburger-wrapper">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <!-- Hamburger Menu Dropdown -->
+        <div id="hamburger-menu" class="hamburger-menu hidden">
+          <a href="profile.html" class="menu-item">Profile & Settings</a>
+          <a href="notifications.html" class="menu-item">
+            Notifications
+            <span id="menu-notif-badge" class="menu-notif-badge hidden"></span>
+          </a>
+          <a href="my-lattes.html" class="menu-item">My Lattes</a>
+          <a href="index.html" class="menu-item">Community Feed</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <form id="entry-form" class="entry-form">
+      <div id="form-errors" class="form-errors hidden"></div>
+
+      <!-- Loadout Selection -->
+      <section class="form-section loadout-section">
+        <div class="loadout-header">
+          <h2>Equipment Loadout</h2>
+          <button type="button" id="manage-loadouts-btn" class="btn-link">Manage</button>
+        </div>
+        <div class="loadout-controls">
+          <select id="loadout-select" class="loadout-select">
+            <option value="">No loadout (start fresh)</option>
+          </select>
+          <button type="button" id="save-loadout-btn" class="btn btn-secondary btn-small">Save Current as Loadout</button>
+        </div>
+        <p class="hint-text">Loadouts remember your equipment setup so you can quickly fill in your usual parameters.</p>
+      </section>
+
+      <!-- Loadout Manager Modal -->
+      <div id="loadout-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Manage Loadouts</h3>
+            <button type="button" class="modal-close" id="close-loadout-modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div id="loadout-list" class="loadout-list"></div>
+            <p id="no-loadouts" class="no-loadouts hidden">No loadouts saved yet. Fill in your form and click "Save Current as Loadout" to create one.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Loadout Modal -->
+      <div id="save-loadout-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="save-loadout-title">Save Loadout</h3>
+            <button type="button" class="modal-close" id="close-save-modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="loadout-name">Loadout Name</label>
+              <input type="text" id="loadout-name" placeholder="e.g., Morning Oat Latte, Weekend Cappuccino" maxlength="50">
+            </div>
+            <p class="hint-text">This will save: milk type, pitcher, cup, espresso amount, temperature, and bean info.</p>
+            <div class="modal-actions">
+              <button type="button" id="cancel-save-loadout" class="btn btn-secondary">Cancel</button>
+              <button type="button" id="confirm-save-loadout" class="btn btn-primary">Save Loadout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Media Upload -->
+      <section class="form-section">
+        <h2>Photo or Video</h2>
+        <div id="media-drop-zone" class="media-drop-zone">
+          <div id="upload-placeholder" class="upload-placeholder">
+            <span class="upload-icon">📷</span>
+            <p>Click or drag to upload</p>
+            <p class="upload-hint">Image or video (max 30s)</p>
+          </div>
+          <div id="media-preview" class="media-preview hidden"></div>
+          <input type="file" id="media-input" accept="image/*,video/*" hidden>
+        </div>
+        <p id="media-error" class="error-text hidden"></p>
+      </section>
+
+      <!-- Coffee Beans -->
+      <section class="form-section">
+        <h2>Coffee Beans</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="beanBrand">Brand</label>
+            <select id="beanBrand">
+              <option value="">Select...</option>
+              <option value="Stumptown">Stumptown</option>
+              <option value="Blue Bottle">Blue Bottle</option>
+              <option value="Intelligentsia">Intelligentsia</option>
+              <option value="Counter Culture">Counter Culture</option>
+              <option value="Onyx">Onyx</option>
+              <option value="Verve">Verve</option>
+              <option value="La Colombe">La Colombe</option>
+              <option value="Equator">Equator</option>
+              <option value="Ritual">Ritual</option>
+              <option value="Sightglass">Sightglass</option>
+              <option value="__custom__">Custom...</option>
+            </select>
+            <input type="text" id="beanBrand-custom" class="custom-input hidden" placeholder="Enter brand name">
+          </div>
+          <div class="form-group">
+            <label for="beanName">Blend/Roast Name</label>
+            <input type="text" id="beanName" placeholder="e.g., Hair Bender, Giant Steps">
+          </div>
+        </div>
+      </section>
+
+      <!-- Milk Parameters -->
+      <section class="form-section">
+        <h2>Milk</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="milkType">Milk Type *</label>
+            <select id="milkType" required>
+              <option value="">Select...</option>
+              <option value="Whole">Whole</option>
+              <option value="2%">2%</option>
+              <option value="Skim">Skim</option>
+              <option value="Oat">Oat</option>
+              <option value="Almond">Almond</option>
+              <option value="Soy">Soy</option>
+              <option value="Coconut">Coconut</option>
+              <option value="__custom__">Custom...</option>
+            </select>
+            <input type="text" id="milkType-custom" class="custom-input hidden" placeholder="Enter custom milk type">
+          </div>
+          <div class="form-group">
+            <label for="milkPitcher">Pitcher Size</label>
+            <select id="milkPitcher">
+              <option value="">Select...</option>
+              <option value="12oz">12oz</option>
+              <option value="17oz">17oz</option>
+              <option value="20oz">20oz</option>
+              <option value="32oz">32oz</option>
+              <option value="__custom__">Custom...</option>
+            </select>
+            <input type="text" id="milkPitcher-custom" class="custom-input hidden" placeholder="Enter custom pitcher size">
+          </div>
+          <div class="form-group">
+            <label for="spoutTip">Spout Tip</label>
+            <select id="spoutTip">
+              <option value="">Select...</option>
+              <option value="Narrow">Narrow</option>
+              <option value="Sharp">Sharp</option>
+              <option value="Round">Round</option>
+              <option value="Wide">Wide</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="milkTemp">Milk Temperature * (<span id="temp-unit">°F</span>)</label>
+            <input type="number" id="milkTemp" step="1" min="0" max="250" required>
+          </div>
+          <div class="form-group">
+            <label for="aerationTime">Aeration Time (sec)</label>
+            <input type="number" id="aerationTime" step="1" min="0">
+          </div>
+          <div class="form-group">
+            <label for="integrationTime">Integration Time (sec)</label>
+            <input type="number" id="integrationTime" step="1" min="0">
+          </div>
+        </div>
+      </section>
+
+      <!-- Cup & Espresso -->
+      <section class="form-section">
+        <h2>Cup & Espresso</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cupType">Cup Type</label>
+            <select id="cupType">
+              <option value="">Select...</option>
+              <option value="Ceramic mug">Ceramic mug</option>
+              <option value="Glass cup">Glass cup</option>
+              <option value="Paper cup">Paper cup</option>
+              <option value="Latte bowl">Latte bowl</option>
+              <option value="Cappuccino cup">Cappuccino cup</option>
+              <option value="__custom__">Custom...</option>
+            </select>
+            <input type="text" id="cupType-custom" class="custom-input hidden" placeholder="Enter custom cup type">
+          </div>
+          <div class="form-group">
+            <label for="cupVolume">Cup Volume (<span id="volume-unit">ml</span>) *</label>
+            <input type="number" id="cupVolume" step="1" min="1" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="espressoGrams">Espresso (<span id="weight-unit">g</span>) *</label>
+          <input type="number" id="espressoGrams" step="0.1" min="0" required>
+        </div>
+      </section>
+
+      <!-- Art Pattern & Rating -->
+      <section class="form-section">
+        <h2>Latte Art</h2>
+        <div class="form-group">
+          <label for="artPattern">Art Pattern *</label>
+          <select id="artPattern" required>
+            <option value="">Select...</option>
+            <option value="Heart">Heart</option>
+            <option value="Tulip">Tulip</option>
+            <option value="Rosetta">Rosetta</option>
+            <option value="Swan">Swan</option>
+            <option value="Latte bear">Latte bear</option>
+            <option value="Winged tulip">Winged tulip</option>
+            <option value="Blank">Blank</option>
+            <option value="__custom__">Custom...</option>
+          </select>
+          <input type="text" id="artPattern-custom" class="custom-input hidden" placeholder="Enter custom pattern name">
+        </div>
+        <div class="form-group">
+          <label>Rate Your Pour</label>
+          <div id="rating-input" class="rating-input">
+            <div class="star-rating-interactive">
+              <span class="star-btn" data-value="1">★</span>
+              <span class="star-btn" data-value="2">★</span>
+              <span class="star-btn" data-value="3">★</span>
+              <span class="star-btn" data-value="4">★</span>
+              <span class="star-btn" data-value="5">★</span>
+            </div>
+            <span id="rating-display" class="rating-display">No rating</span>
+            <input type="hidden" id="rating" value="0">
+          </div>
+        </div>
+      </section>
+
+      <!-- Notes -->
+      <section class="form-section">
+        <h2>Notes</h2>
+        <div class="form-group">
+          <textarea id="notes" rows="4" placeholder="Any additional notes about this pour..."></textarea>
+        </div>
+      </section>
+
+      <!-- Sharing -->
+      <section class="form-section">
+        <h2>Sharing</h2>
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="isPublic" checked>
+            <span class="checkmark"></span>
+            <span>Share to community feed</span>
+          </label>
+          <p class="hint-text">Make this entry visible to other Latte'd users</p>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <a href="index.html" class="btn btn-secondary">Cancel</a>
+        <button type="submit" id="submit-btn" class="btn btn-primary">Save Entry</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/entry-form.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

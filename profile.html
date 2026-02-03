@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile & Settings - Latte'd</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="index.html" class="back-link">← Back</a>
+      <h1 class="page-title">Profile & Settings</h1>
+      <div class="hamburger-wrapper">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <!-- Hamburger Menu Dropdown -->
+        <div id="hamburger-menu" class="hamburger-menu hidden">
+          <a href="profile.html" class="menu-item active">Profile & Settings</a>
+          <a href="notifications.html" class="menu-item">
+            Notifications
+            <span id="menu-notif-badge" class="menu-notif-badge hidden"></span>
+          </a>
+          <a href="my-lattes.html" class="menu-item">My Lattes</a>
+          <a href="index.html" class="menu-item">Community Feed</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content profile-page">
+    <form id="profile-form" class="profile-form">
+      <!-- Profile Info -->
+      <section class="form-section">
+        <h2>Your Profile</h2>
+        <div class="form-group">
+          <label for="profileName">Display Name</label>
+          <input type="text" id="profileName" placeholder="How you'll appear to others">
+        </div>
+      </section>
+
+      <!-- Location -->
+      <section class="form-section">
+        <h2>Location</h2>
+        <p class="section-hint">Share your location to connect with local baristas</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileCity">City</label>
+            <input type="text" id="profileCity" placeholder="e.g., Seattle">
+          </div>
+          <div class="form-group">
+            <label for="profileState">State/Province</label>
+            <input type="text" id="profileState" placeholder="e.g., WA">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="profileCountry">Country</label>
+          <input type="text" id="profileCountry" placeholder="e.g., USA">
+        </div>
+      </section>
+
+      <!-- Units -->
+      <section class="form-section">
+        <h2>Units</h2>
+        <div class="units-grid">
+          <div class="unit-option">
+            <label>Temperature</label>
+            <div class="unit-toggle">
+              <button type="button" class="unit-btn" data-unit="tempUnit" data-value="F">°F</button>
+              <button type="button" class="unit-btn" data-unit="tempUnit" data-value="C">°C</button>
+            </div>
+          </div>
+          <div class="unit-option">
+            <label>Volume</label>
+            <div class="unit-toggle">
+              <button type="button" class="unit-btn" data-unit="volumeUnit" data-value="ml">ml</button>
+              <button type="button" class="unit-btn" data-unit="volumeUnit" data-value="oz">oz</button>
+            </div>
+          </div>
+          <div class="unit-option">
+            <label>Weight</label>
+            <div class="unit-toggle">
+              <button type="button" class="unit-btn" data-unit="weightUnit" data-value="g">g</button>
+              <button type="button" class="unit-btn" data-unit="weightUnit" data-value="oz">oz</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Following -->
+      <section class="form-section">
+        <h2>Following</h2>
+        <div id="following-list" class="following-list">
+          <p class="empty-following">You're not following anyone yet. Visit the community feed to find baristas!</p>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="form-section">
+        <h2>Your Stats</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span id="stat-total" class="stat-value">0</span>
+            <span class="stat-label">Total Pours</span>
+          </div>
+          <div class="stat-item">
+            <span id="stat-public" class="stat-value">0</span>
+            <span class="stat-label">Shared</span>
+          </div>
+          <div class="stat-item">
+            <span id="stat-patterns" class="stat-value">0</span>
+            <span class="stat-label">Patterns</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Save -->
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

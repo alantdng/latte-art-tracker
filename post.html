@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post - Latte'd</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="index.html" class="back-link">← Back</a>
+      <h1 class="page-title">Post</h1>
+      <div class="hamburger-wrapper">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <!-- Hamburger Menu Dropdown -->
+        <div id="hamburger-menu" class="hamburger-menu hidden">
+          <a href="profile.html" class="menu-item">Profile & Settings</a>
+          <a href="notifications.html" class="menu-item">
+            Notifications
+            <span id="menu-notif-badge" class="menu-notif-badge hidden"></span>
+          </a>
+          <a href="my-lattes.html" class="menu-item">My Lattes</a>
+          <a href="index.html" class="menu-item">Community Feed</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content post-page">
+    <!-- Post Header -->
+    <section class="post-header">
+      <div class="post-user-row">
+        <div class="post-avatar" id="post-avatar"></div>
+        <div class="post-user-info">
+          <span class="post-username" id="post-username"></span>
+          <span class="post-location" id="post-location"></span>
+        </div>
+        <button id="follow-btn" class="btn-follow hidden"></button>
+      </div>
+      <time class="post-time" id="post-time"></time>
+    </section>
+
+    <!-- Post Media -->
+    <section class="post-media-section">
+      <div id="post-media" class="post-media"></div>
+    </section>
+
+    <!-- Post Info -->
+    <section class="post-info">
+      <div class="post-title-row">
+        <h2 id="post-pattern" class="post-pattern"></h2>
+        <div id="post-rating" class="post-rating"></div>
+      </div>
+
+      <div class="post-params" id="post-params"></div>
+
+      <div id="post-beans" class="post-beans hidden"></div>
+
+      <p id="post-notes" class="post-notes hidden"></p>
+    </section>
+
+    <!-- Comments Section -->
+    <section class="post-comments">
+      <h3 id="comments-heading">Comments</h3>
+
+      <!-- Comment Input -->
+      <div class="comment-form">
+        <input type="text" id="comment-input" class="comment-input" placeholder="Add a comment..." maxlength="500">
+        <button type="button" id="submit-comment" class="btn btn-primary btn-small">Post</button>
+      </div>
+
+      <!-- Comments Thread -->
+      <div id="comments-thread" class="comments-thread"></div>
+    </section>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/post.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

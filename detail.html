@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entry Details - Latte'd</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="my-lattes.html" class="back-link">← Back</a>
+      <h1 class="page-title">Details</h1>
+      <div class="hamburger-wrapper">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <!-- Hamburger Menu Dropdown -->
+        <div id="hamburger-menu" class="hamburger-menu hidden">
+          <a href="profile.html" class="menu-item">Profile & Settings</a>
+          <a href="notifications.html" class="menu-item">
+            Notifications
+            <span id="menu-notif-badge" class="menu-notif-badge hidden"></span>
+          </a>
+          <a href="my-lattes.html" class="menu-item">My Lattes</a>
+          <a href="index.html" class="menu-item">Community Feed</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content detail-page">
+    <!-- Media Display -->
+    <section class="detail-media-section">
+      <div id="detail-media" class="detail-media"></div>
+    </section>
+
+    <!-- Info Header -->
+    <section class="detail-header">
+      <div class="detail-title-row">
+        <h2 id="detail-pattern" class="detail-pattern"></h2>
+        <div id="detail-rating" class="detail-rating hidden"></div>
+      </div>
+      <time id="detail-date" class="detail-date"></time>
+      <span id="detail-public-badge" class="public-badge-detail hidden">Shared to Community</span>
+    </section>
+
+    <!-- Beans -->
+    <section id="beans-section" class="detail-beans hidden">
+      <h3>Coffee Beans</h3>
+      <p id="detail-beans"></p>
+    </section>
+
+    <!-- Parameters -->
+    <section class="detail-params">
+      <h3>Brewing Parameters</h3>
+      <div class="params-grid">
+        <div class="param-item">
+          <span class="param-label">Milk Type</span>
+          <span id="param-milk-type" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Pitcher</span>
+          <span id="param-milk-pitcher" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Spout Tip</span>
+          <span id="param-spout-tip" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Milk Temp</span>
+          <span id="param-milk-temp" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Aeration</span>
+          <span id="param-aeration" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Integration</span>
+          <span id="param-integration" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Cup Type</span>
+          <span id="param-cup-type" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Cup Volume</span>
+          <span id="param-cup-volume" class="param-value"></span>
+        </div>
+        <div class="param-item">
+          <span class="param-label">Espresso</span>
+          <span id="param-espresso" class="param-value"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notes -->
+    <section id="notes-section" class="detail-notes hidden">
+      <h3>Notes</h3>
+      <p id="detail-notes"></p>
+    </section>
+
+    <!-- Comments -->
+    <section class="detail-comments">
+      <h3>Comments</h3>
+      <div id="comments-list" class="comments-list"></div>
+      <div class="comment-form">
+        <input type="text" id="comment-input" class="comment-input" placeholder="Add a comment..." maxlength="500">
+        <button type="button" id="submit-comment" class="btn btn-primary btn-small">Post</button>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="detail-actions">
+      <button id="edit-btn" class="btn btn-secondary">Edit</button>
+      <button id="delete-btn" class="btn btn-danger">Delete</button>
+    </section>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
