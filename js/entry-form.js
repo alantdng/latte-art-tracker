@@ -895,9 +895,7 @@ function initEntryForm() {
   // Set up form submission
   document.getElementById('entry-form').addEventListener('submit', handleSubmit);
 
-  // Check if editing
-  const params = new URLSearchParams(window.location.search);
-  const editId = params.get('edit');
+  // Check if editing (editId already defined above)
   if (editId) {
     loadEntryForEdit(editId);
   }
