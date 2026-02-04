@@ -240,13 +240,13 @@ function submitLocalComment(entryId) {
 
   if (!text) return;
 
-  const profile = Storage.getProfile();
-  if (!profile.name) {
-    alert('Please set your name in Profile & Settings before commenting.');
+  const result = Storage.addComment(entryId, text);
+
+  if (!result) {
+    console.error('Failed to add comment - entry not found:', entryId);
+    alert('Failed to add comment. Please try again.');
     return;
   }
-
-  Storage.addComment(entryId, text);
 
   // Refresh comments
   const entry = Storage.getEntry(entryId);

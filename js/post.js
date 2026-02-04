@@ -183,15 +183,24 @@ function submitComment() {
   if (isMockEntry) {
     Storage.addMockComment(currentEntry.id, text);
   } else {
-    Storage.addComment(currentEntry.id, text);
+    const result = Storage.addComment(currentEntry.id, text);
+    if (!result) {
+      console.error('Failed to add comment - entry not found:', currentEntry.id);
+      alert('Failed to add comment. Please try again.');
+      return;
+    }
   }
 
   // Clear input
   input.value = '';
 
-  // Refresh comments
+  // Refresh entry data and comments
   if (!isMockEntry) {
-    currentEntry = Storage.getEntry(currentEntry.id);
+    // Refresh from localStorage
+    const refreshedEntry = Storage.getEntry(currentEntry.id);
+    if (refreshedEntry) {
+      currentEntry = refreshedEntry;
+    }
   }
   renderComments();
 }
@@ -226,9 +235,19 @@ async function initPostPage() {
     const settings = Storage.getSettings();
     const profile = Storage.getProfile();
 
-    // Render user info
-    document.getElementById('post-avatar').textContent = currentEntry.user.name.charAt(0).toUpperCase();
-    document.getElementById('post-username').textContent = currentEntry.user.name;
+    // Render user info with clickable link to profile
+    const avatarEl = document.getElementById('post-avatar');
+    const usernameEl = document.getElementById('post-username');
+    const profileUrl = `user-profile.html?id=${currentEntry.user.id}&mock=${isMockEntry}`;
+
+    avatarEl.textContent = currentEntry.user.name.charAt(0).toUpperCase();
+    avatarEl.style.cursor = 'pointer';
+    avatarEl.addEventListener('click', () => window.location.href = profileUrl);
+
+    usernameEl.textContent = currentEntry.user.name;
+    usernameEl.classList.add('post-username-link');
+    usernameEl.style.cursor = 'pointer';
+    usernameEl.addEventListener('click', () => window.location.href = profileUrl);
 
     const location = formatLocation(currentEntry.user.location);
     const locationEl = document.getElementById('post-location');
@@ -263,17 +282,44 @@ async function initPostPage() {
       });
     }
 
-    // Media
+    // Media - load full resolution for local entries, thumbnail/placeholder for mock
     const mediaContainer = document.getElementById('post-media');
-    const thumbnail = currentEntry.media.thumbnail || getPlaceholderImage(currentEntry.id, currentEntry.params.artPattern);
 
-    if (currentEntry.media.type === 'video') {
-      mediaContainer.innerHTML = `
-        <video src="${thumbnail}" controls muted></video>
-        <span class="video-badge">Video</span>
-      `;
+    if (!isMockEntry) {
+      // Load full resolution media from IndexedDB for local entries
+      const mediaBlob = await Storage.getMedia(currentEntry.id);
+      if (mediaBlob) {
+        if (currentEntry.media.type === 'video') {
+          const video = document.createElement('video');
+          video.src = URL.createObjectURL(mediaBlob);
+          video.controls = true;
+          video.muted = true;
+          mediaContainer.appendChild(video);
+          const badge = document.createElement('span');
+          badge.className = 'video-badge';
+          badge.textContent = 'Video';
+          mediaContainer.appendChild(badge);
+        } else {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(mediaBlob);
+          img.alt = `${currentEntry.params.artPattern} latte art`;
+          mediaContainer.appendChild(img);
+        }
+      } else {
+        // Fallback to thumbnail if blob not found
+        mediaContainer.innerHTML = `<img src="${currentEntry.media.thumbnail}" alt="${currentEntry.params.artPattern} latte art">`;
+      }
     } else {
-      mediaContainer.innerHTML = `<img src="${thumbnail}" alt="${currentEntry.params.artPattern} latte art">`;
+      // Mock entries use placeholder images
+      const thumbnail = currentEntry.media.thumbnail || getPlaceholderImage(currentEntry.id, currentEntry.params.artPattern);
+      if (currentEntry.media.type === 'video') {
+        mediaContainer.innerHTML = `
+          <video src="${thumbnail}" controls muted></video>
+          <span class="video-badge">Video</span>
+        `;
+      } else {
+        mediaContainer.innerHTML = `<img src="${thumbnail}" alt="${currentEntry.params.artPattern} latte art">`;
+      }
     }
 
     // Pattern and rating

@@ -113,9 +113,11 @@ function renderFeed(filter = {}) {
       <article class="feed-card" data-id="${entry.id}" data-mock="${isMock}">
         <div class="feed-card-header">
           <div class="feed-user-info">
-            <div class="feed-avatar">${entry.user.name.charAt(0).toUpperCase()}</div>
+            <a href="user-profile.html?id=${entry.user.id}&mock=${isMock}" class="feed-avatar-link" onclick="event.stopPropagation();">
+              <div class="feed-avatar">${entry.user.name.charAt(0).toUpperCase()}</div>
+            </a>
             <div class="feed-user-details">
-              <span class="feed-username">${entry.user.name}</span>
+              <a href="user-profile.html?id=${entry.user.id}&mock=${isMock}" class="feed-username feed-username-link" onclick="event.stopPropagation();">${entry.user.name}</a>
               ${location ? `<span class="feed-location">${location}</span>` : ''}
             </div>
           </div>
