@@ -14,24 +14,28 @@
         <a href="index.html" class="nav-tab">Feed</a>
         <a href="my-lattes.html" class="nav-tab active">My Lattes</a>
       </nav>
-      <div class="hamburger-wrapper">
-        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
-          <span class="hamburger-line"></span>
-          <span class="hamburger-line"></span>
-          <span class="hamburger-line"></span>
-        </button>
-        <!-- Hamburger Menu Dropdown -->
-        <div id="hamburger-menu" class="hamburger-menu hidden">
-          <div id="user-info" class="menu-user-info"></div>
-          <a href="profile.html" class="menu-item">Profile & Settings</a>
-          <a href="notifications.html" class="menu-item">
-            Notifications
-            <span id="menu-notif-badge" class="menu-notif-badge hidden"></span>
-          </a>
-          <a href="my-lattes.html" class="menu-item active">My Lattes</a>
-          <a href="index.html" class="menu-item">Community Feed</a>
-          <hr class="menu-divider">
-          <a href="#" id="logout-btn" class="menu-item menu-item-danger">Log Out</a>
+      <div class="header-actions">
+        <!-- Notification Icon -->
+        <a href="notifications.html" class="notif-icon-wrapper" aria-label="Notifications">
+          <span class="notif-icon">☕</span>
+          <span id="notif-badge" class="notif-badge hidden"></span>
+        </a>
+        <!-- Hamburger Menu -->
+        <div class="hamburger-wrapper">
+          <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+          <!-- Hamburger Menu Dropdown -->
+          <div id="hamburger-menu" class="hamburger-menu hidden">
+            <div id="user-info" class="menu-user-info"></div>
+            <a href="profile.html" class="menu-item">Profile & Settings</a>
+            <a href="my-lattes.html" class="menu-item active">My Lattes</a>
+            <a href="index.html" class="menu-item">Community Feed</a>
+            <hr class="menu-divider">
+            <a href="#" id="logout-btn" class="menu-item menu-item-danger">Log Out</a>
+          </div>
         </div>
       </div>
     </div>

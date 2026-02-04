@@ -273,8 +273,8 @@ function setupHamburgerMenu() {
     }
   });
 
-  // Update notification badge
-  const badge = document.getElementById('menu-notif-badge');
+  // Update notification badge (header icon)
+  const badge = document.getElementById('notif-badge');
   const unreadCount = Storage.getUnreadNotificationCount();
   if (badge && unreadCount > 0) {
     badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
