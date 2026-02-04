@@ -16,7 +16,7 @@ const VOTES_KEY = 'latte_votes';
 const LOADOUTS_KEY = 'latte_loadouts';
 const ACTIVE_LOADOUT_KEY = 'latte_active_loadout';
 
-let db = null;
+let idb = null;
 
 // Dropdown options
 const SPOUT_TIPS = ['Narrow', 'Sharp', 'Round', 'Wide'];
@@ -32,7 +32,7 @@ async function initDB() {
     return null;
   }
 
-  if (db) return db;
+  if (idb) return idb;
 
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -40,8 +40,8 @@ async function initDB() {
     request.onerror = () => reject(request.error);
 
     request.onsuccess = () => {
-      db = request.result;
-      resolve(db);
+      idb = request.result;
+      resolve(idb);
     };
 
     request.onupgradeneeded = (event) => {
@@ -70,7 +70,7 @@ function generateId() {
 async function saveMedia(id, blob) {
   await initDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction([MEDIA_STORE], 'readwrite');
+    const transaction = idb.transaction([MEDIA_STORE], 'readwrite');
     const store = transaction.objectStore(MEDIA_STORE);
     const request = store.put({ id, blob });
 
@@ -85,7 +85,7 @@ async function saveMedia(id, blob) {
 async function getMedia(id) {
   await initDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction([MEDIA_STORE], 'readonly');
+    const transaction = idb.transaction([MEDIA_STORE], 'readonly');
     const store = transaction.objectStore(MEDIA_STORE);
     const request = store.get(id);
 
@@ -102,7 +102,7 @@ async function getMedia(id) {
 async function deleteMedia(id) {
   await initDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction([MEDIA_STORE], 'readwrite');
+    const transaction = idb.transaction([MEDIA_STORE], 'readwrite');
     const store = transaction.objectStore(MEDIA_STORE);
     const request = store.delete(id);
 
