@@ -110,9 +110,9 @@ function renderComment(comment, entryId) {
 /**
  * Render all comments
  */
-function renderComments() {
+function renderPostComments() {
   try {
-    console.log('=== renderComments START ===');
+    console.log('=== renderPostComments START ===');
     const container = document.getElementById('comments-thread');
     const heading = document.getElementById('comments-heading');
 
@@ -163,9 +163,9 @@ function renderComments() {
     });
   });
 
-  console.log('=== renderComments END ===');
+  console.log('=== renderPostComments END ===');
   } catch (error) {
-    console.error('Error in renderComments:', error);
+    console.error('Error in renderPostComments:', error);
   }
 }
 
@@ -181,7 +181,7 @@ function handleVote(commentId, vote) {
     currentEntry = Storage.getEntry(currentEntry.id);
   }
 
-  renderComments();
+  renderPostComments();
 }
 
 /**
@@ -223,8 +223,8 @@ function submitComment() {
     }
   }
 
-  console.log('Calling renderComments, currentEntry.comments:', currentEntry?.comments);
-  renderComments();
+  console.log('Calling renderPostComments, currentEntry.comments:', currentEntry?.comments);
+  renderPostComments();
 }
 
 /**
@@ -379,7 +379,7 @@ async function initPostPage() {
     }
 
     // Render comments
-    renderComments();
+    renderPostComments();
 
     // Set up comment submission
     const commentInput = document.getElementById('comment-input');
