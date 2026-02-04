@@ -2624,6 +2624,168 @@ body {
 }
 
 /* ==========================================
+   Enhanced Comments System
+   ========================================== */
+
+.comments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.comments-header h3 {
+  margin: 0;
+}
+
+.comment-sort-select {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+/* Threaded comment replies */
+.comment-reply {
+  border-left: 2px solid var(--color-border);
+  padding-left: var(--spacing-sm);
+}
+
+/* Comment actions menu */
+.comment-actions-wrapper {
+  position: relative;
+  margin-left: auto;
+}
+
+.comment-actions-btn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.comment-actions-btn:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+
+.comment-actions-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  min-width: 100px;
+  overflow: hidden;
+}
+
+.comment-actions-menu button {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.comment-actions-menu button:hover {
+  background: var(--color-accent);
+}
+
+.comment-actions-menu .action-delete {
+  color: var(--color-error);
+}
+
+/* Edited tag */
+.comment-edited {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Reply form */
+.comment-reply-form {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-background);
+  border-radius: var(--radius-md);
+}
+
+.comment-reply-form .reply-input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.comment-reply-form .reply-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.reply-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+/* Edit form */
+.comment-edit-form {
+  margin-top: var(--spacing-xs);
+}
+
+.comment-edit-form .edit-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: var(--spacing-sm);
+}
+
+.comment-edit-form .edit-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.edit-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+/* Update comment header to accommodate actions */
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==========================================
    Header Actions & Notification Icon
    ========================================== */
 

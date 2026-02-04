@@ -222,8 +222,11 @@ async function deleteEntry(id) {
 
 /**
  * Add a comment to an entry
+ * @param {string} entryId - Entry ID
+ * @param {string} commentText - Comment text
+ * @param {string} parentId - Optional parent comment ID for replies
  */
-function addComment(entryId, commentText) {
+function addComment(entryId, commentText, parentId = null) {
   const entries = getEntries();
   const index = entries.findIndex(e => e.id === entryId);
 
@@ -236,8 +239,10 @@ function addComment(entryId, commentText) {
     userName: profile.name || 'Anonymous',
     text: commentText,
     createdAt: Date.now(),
+    updatedAt: null,
     upvotes: 0,
-    downvotes: 0
+    downvotes: 0,
+    parentId: parentId
   };
 
   if (!entries[index].comments) {
@@ -256,7 +261,70 @@ function addComment(entryId, commentText) {
     );
   }
 
+  // If replying to someone else's comment, notify them
+  if (parentId) {
+    const parentComment = entries[index].comments.find(c => c.id === parentId);
+    if (parentComment && parentComment.userId !== profile.id) {
+      createNotification(
+        'comment',
+        `${profile.name || 'Someone'} replied to your comment`,
+        `post.html?id=${entryId}`
+      );
+    }
+  }
+
   return comment;
+}
+
+/**
+ * Edit a comment
+ */
+function editComment(entryId, commentId, newText) {
+  const entries = getEntries();
+  const index = entries.findIndex(e => e.id === entryId);
+
+  if (index === -1) return null;
+
+  const profile = getProfile();
+  const commentIndex = entries[index].comments?.findIndex(c => c.id === commentId);
+
+  if (commentIndex === -1 || commentIndex === undefined) return null;
+
+  const comment = entries[index].comments[commentIndex];
+
+  // Only allow editing own comments
+  if (comment.userId !== profile.id) return null;
+
+  comment.text = newText;
+  comment.updatedAt = Date.now();
+
+  entries[index].comments[commentIndex] = comment;
+  saveEntries(entries);
+
+  return comment;
+}
+
+/**
+ * Delete a comment
+ */
+function deleteComment(entryId, commentId) {
+  const entries = getEntries();
+  const index = entries.findIndex(e => e.id === entryId);
+
+  if (index === -1) return false;
+
+  const profile = getProfile();
+  const comment = entries[index].comments?.find(c => c.id === commentId);
+
+  // Only allow deleting own comments
+  if (!comment || comment.userId !== profile.id) return false;
+
+  entries[index].comments = entries[index].comments.filter(c => c.id !== commentId);
+  // Also remove any replies to this comment
+  entries[index].comments = entries[index].comments.filter(c => c.parentId !== commentId);
+
+  saveEntries(entries);
+  return true;
 }
 
 /**
@@ -764,21 +832,21 @@ function getFeedLocations() {
 
 /**
  * Add comment to mock entry (stores in localStorage)
+ * @param {string} parentId - Optional parent comment ID for replies
  */
-function addMockComment(entryId, commentText) {
-  console.log('addMockComment called:', entryId, commentText);
+function addMockComment(entryId, commentText, parentId = null) {
   const profile = getProfile();
-  console.log('Profile:', profile);
   const comment = {
     id: generateId(),
     userId: profile.id,
     userName: profile.name || 'Anonymous',
     text: commentText,
     createdAt: Date.now(),
+    updatedAt: null,
     upvotes: 0,
-    downvotes: 0
+    downvotes: 0,
+    parentId: parentId
   };
-  console.log('Created comment:', comment);
 
   // Store mock comments separately
   const mockCommentsKey = `mock_comments_${entryId}`;
@@ -786,24 +854,61 @@ function addMockComment(entryId, commentText) {
   const comments = existing ? JSON.parse(existing) : [];
   comments.push(comment);
   localStorage.setItem(mockCommentsKey, JSON.stringify(comments));
-  console.log('Saved comments to localStorage:', mockCommentsKey, comments);
 
-  // Simulate a notification from the post author (after a delay in real app)
-  const mockEntry = MOCK_ENTRIES.find(e => e.id === entryId);
-  if (mockEntry) {
-    // Random chance of getting a reply notification (simulates async backend)
-    if (Math.random() > 0.5) {
-      setTimeout(() => {
-        createNotification(
-          'comment',
-          `${mockEntry.user.name} replied to your comment on their ${mockEntry.params.artPattern} post`,
-          `post.html?id=${entryId}&mock=true`
-        );
-      }, 2000);
+  // If replying to someone, notify them
+  if (parentId) {
+    const allComments = getMockComments(entryId);
+    const parentComment = allComments.find(c => c.id === parentId);
+    if (parentComment && parentComment.userId !== profile.id) {
+      createNotification(
+        'comment',
+        `${profile.name || 'Someone'} replied to your comment`,
+        `post.html?id=${entryId}&mock=true`
+      );
     }
   }
 
   return comment;
+}
+
+/**
+ * Edit a mock comment
+ */
+function editMockComment(entryId, commentId, newText) {
+  const profile = getProfile();
+  const mockCommentsKey = `mock_comments_${entryId}`;
+  const existing = localStorage.getItem(mockCommentsKey);
+  const comments = existing ? JSON.parse(existing) : [];
+
+  const index = comments.findIndex(c => c.id === commentId);
+  if (index === -1) return null;
+
+  // Only allow editing own comments
+  if (comments[index].userId !== profile.id) return null;
+
+  comments[index].text = newText;
+  comments[index].updatedAt = Date.now();
+
+  localStorage.setItem(mockCommentsKey, JSON.stringify(comments));
+  return comments[index];
+}
+
+/**
+ * Delete a mock comment
+ */
+function deleteMockComment(entryId, commentId) {
+  const profile = getProfile();
+  const mockCommentsKey = `mock_comments_${entryId}`;
+  const existing = localStorage.getItem(mockCommentsKey);
+  let comments = existing ? JSON.parse(existing) : [];
+
+  const comment = comments.find(c => c.id === commentId);
+  if (!comment || comment.userId !== profile.id) return false;
+
+  // Remove the comment and its replies
+  comments = comments.filter(c => c.id !== commentId && c.parentId !== commentId);
+  localStorage.setItem(mockCommentsKey, JSON.stringify(comments));
+  return true;
 }
 
 /**
@@ -1244,8 +1349,12 @@ window.Storage = {
   getCommunityFeed,
   getFeedLocations,
   addComment,
+  editComment,
+  deleteComment,
   getComments,
   addMockComment,
+  editMockComment,
+  deleteMockComment,
   getMockComments,
   // Notifications
   getNotifications,

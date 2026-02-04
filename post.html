@@ -73,10 +73,18 @@
 
     <!-- Comments Section -->
     <section class="post-comments">
-      <h3 id="comments-heading">Comments</h3>
+      <div class="comments-header">
+        <h3 id="comments-heading">Comments</h3>
+        <select id="comment-sort" class="comment-sort-select">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="top">Top Voted</option>
+          <option value="controversial">Controversial</option>
+        </select>
+      </div>
 
       <!-- Comment Input -->
-      <div class="comment-form">
+      <div class="comment-form" id="main-comment-form">
         <input type="text" id="comment-input" class="comment-input" placeholder="Add a comment..." maxlength="500">
         <button type="button" id="submit-comment" class="btn btn-primary btn-small">Post</button>
       </div>

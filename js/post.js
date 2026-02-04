@@ -77,16 +77,31 @@ function getPlaceholderImage(entryId, pattern) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+// Current sort order
+let commentSortOrder = 'newest';
+
 /**
- * Render a single comment with vote buttons
+ * Render a single comment with vote buttons, actions menu, and replies
  */
-function renderComment(comment, entryId) {
+function renderComment(comment, entryId, allComments, depth = 0) {
   const profile = Storage.getProfile();
   const userVote = Storage.getCommentVote(entryId, comment.id);
   const voteScore = (comment.upvotes || 0) - (comment.downvotes || 0);
+  const isOwner = comment.userId === profile.id;
+  const editedTag = comment.updatedAt ? `<span class="comment-edited">(edited)</span>` : '';
+
+  // Get replies to this comment
+  const replies = allComments.filter(c => c.parentId === comment.id);
+  const repliesHtml = replies.map(reply =>
+    renderComment(reply, entryId, allComments, depth + 1)
+  ).join('');
+
+  const maxDepth = 4; // Max nesting level
+  const indentClass = depth > 0 ? 'comment-reply' : '';
+  const depthStyle = depth > 0 && depth <= maxDepth ? `margin-left: ${Math.min(depth, maxDepth) * 20}px;` : '';
 
   return `
-    <div class="comment-item" data-comment-id="${comment.id}">
+    <div class="comment-item ${indentClass}" data-comment-id="${comment.id}" style="${depthStyle}">
       <div class="comment-votes">
         <button class="vote-btn upvote ${userVote === 1 ? 'active' : ''}" data-vote="1" data-comment-id="${comment.id}">
           <span class="vote-arrow">▲</span>
@@ -100,11 +115,74 @@ function renderComment(comment, entryId) {
         <div class="comment-header">
           <span class="comment-author">${comment.userName}</span>
           <span class="comment-time">${formatRelativeTime(comment.createdAt)}</span>
+          ${editedTag}
+          <div class="comment-actions-wrapper">
+            <button class="comment-actions-btn" data-comment-id="${comment.id}">⋯</button>
+            <div class="comment-actions-menu hidden" data-comment-id="${comment.id}">
+              <button class="action-reply" data-comment-id="${comment.id}">Reply</button>
+              ${isOwner ? `
+                <button class="action-edit" data-comment-id="${comment.id}">Edit</button>
+                <button class="action-delete" data-comment-id="${comment.id}">Delete</button>
+              ` : ''}
+            </div>
+          </div>
         </div>
-        <p class="comment-text">${comment.text}</p>
+        <p class="comment-text" data-comment-id="${comment.id}">${escapeHtml(comment.text)}</p>
+        <div class="comment-reply-form hidden" data-parent-id="${comment.id}">
+          <input type="text" class="reply-input" placeholder="Write a reply..." maxlength="500">
+          <div class="reply-actions">
+            <button class="btn btn-small btn-secondary cancel-reply">Cancel</button>
+            <button class="btn btn-small btn-primary submit-reply" data-parent-id="${comment.id}">Reply</button>
+          </div>
+        </div>
       </div>
     </div>
+    ${repliesHtml}
   `;
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Sort comments based on current sort order
+ */
+function sortComments(comments) {
+  // Only sort top-level comments, keep replies with their parents
+  const topLevel = comments.filter(c => !c.parentId);
+
+  switch (commentSortOrder) {
+    case 'oldest':
+      topLevel.sort((a, b) => a.createdAt - b.createdAt);
+      break;
+    case 'top':
+      topLevel.sort((a, b) => {
+        const scoreA = (a.upvotes || 0) - (a.downvotes || 0);
+        const scoreB = (b.upvotes || 0) - (b.downvotes || 0);
+        return scoreB - scoreA;
+      });
+      break;
+    case 'controversial':
+      // Controversial = most total votes (up + down)
+      topLevel.sort((a, b) => {
+        const totalA = (a.upvotes || 0) + (a.downvotes || 0);
+        const totalB = (b.upvotes || 0) + (b.downvotes || 0);
+        return totalB - totalA;
+      });
+      break;
+    case 'newest':
+    default:
+      topLevel.sort((a, b) => b.createdAt - a.createdAt);
+      break;
+  }
+
+  return topLevel;
 }
 
 /**
@@ -112,65 +190,243 @@ function renderComment(comment, entryId) {
  */
 function renderPostComments() {
   try {
-    console.log('=== renderPostComments START ===');
     const container = document.getElementById('comments-thread');
     const heading = document.getElementById('comments-heading');
 
-    console.log('container:', container, 'heading:', heading, 'currentEntry:', !!currentEntry, 'isMockEntry:', isMockEntry);
-
-    if (!container || !currentEntry) {
-      console.log('Early return - container or currentEntry missing');
-      return;
-    }
+    if (!container || !currentEntry) return;
 
     let comments = [];
     if (isMockEntry) {
       comments = Storage.getMockComments(currentEntry.id);
-      console.log('Got mock comments:', comments);
     } else {
       comments = currentEntry.comments || [];
-      console.log('Got local comments:', comments, 'length:', comments.length);
     }
 
-  if (heading) {
-    heading.textContent = `Comments (${comments.length})`;
-  }
+    if (heading) {
+      heading.textContent = `Comments (${comments.length})`;
+    }
 
-  if (comments.length === 0) {
-    container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
-    return;
-  }
+    if (comments.length === 0) {
+      container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+      return;
+    }
 
-  // Sort by vote score (highest first), then by date
-  const sortedComments = [...comments].sort((a, b) => {
-    const scoreA = (a.upvotes || 0) - (a.downvotes || 0);
-    const scoreB = (b.upvotes || 0) - (b.downvotes || 0);
-    if (scoreB !== scoreA) return scoreB - scoreA;
-    return b.createdAt - a.createdAt;
-  });
+    // Sort top-level comments
+    const sortedTopLevel = sortComments(comments);
 
-  container.innerHTML = sortedComments.map(comment =>
-    renderComment(comment, currentEntry.id)
-  ).join('');
+    // Render top-level comments with their replies
+    container.innerHTML = sortedTopLevel.map(comment =>
+      renderComment(comment, currentEntry.id, comments, 0)
+    ).join('');
 
-  // Add vote handlers
-  container.querySelectorAll('.vote-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const commentId = btn.dataset.commentId;
-      const vote = parseInt(btn.dataset.vote);
-      handleVote(commentId, vote);
-    });
-  });
+    // Add event handlers
+    setupCommentEventHandlers(container);
 
-  console.log('=== renderPostComments END ===');
   } catch (error) {
     console.error('Error in renderPostComments:', error);
   }
 }
 
 /**
- * Handle vote on comment
+ * Set up all comment event handlers
+ */
+function setupCommentEventHandlers(container) {
+  // Vote handlers
+  container.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      const vote = parseInt(btn.dataset.vote);
+      handleVote(commentId, vote);
+    });
+  });
+
+  // Actions menu toggle
+  container.querySelectorAll('.comment-actions-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      const menu = container.querySelector(`.comment-actions-menu[data-comment-id="${commentId}"]`);
+
+      // Close all other menus
+      container.querySelectorAll('.comment-actions-menu').forEach(m => {
+        if (m !== menu) m.classList.add('hidden');
+      });
+
+      menu.classList.toggle('hidden');
+    });
+  });
+
+  // Close menus on outside click
+  document.addEventListener('click', () => {
+    container.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
+  });
+
+  // Reply buttons
+  container.querySelectorAll('.action-reply').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      showReplyForm(commentId);
+    });
+  });
+
+  // Edit buttons
+  container.querySelectorAll('.action-edit').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      showEditForm(commentId);
+    });
+  });
+
+  // Delete buttons
+  container.querySelectorAll('.action-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      handleDeleteComment(commentId);
+    });
+  });
+
+  // Submit reply buttons
+  container.querySelectorAll('.submit-reply').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const parentId = btn.dataset.parentId;
+      const form = container.querySelector(`.comment-reply-form[data-parent-id="${parentId}"]`);
+      const input = form.querySelector('.reply-input');
+      handleReply(parentId, input.value.trim());
+    });
+  });
+
+  // Cancel reply buttons
+  container.querySelectorAll('.cancel-reply').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const form = btn.closest('.comment-reply-form');
+      form.classList.add('hidden');
+      form.querySelector('.reply-input').value = '';
+    });
+  });
+
+  // Reply input enter key
+  container.querySelectorAll('.reply-input').forEach(input => {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const parentId = input.closest('.comment-reply-form').dataset.parentId;
+        handleReply(parentId, input.value.trim());
+      }
+    });
+  });
+}
+
+/**
+ * Show reply form for a comment
+ */
+function showReplyForm(commentId) {
+  // Hide all reply forms first
+  document.querySelectorAll('.comment-reply-form').forEach(f => f.classList.add('hidden'));
+  // Hide action menus
+  document.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
+
+  const form = document.querySelector(`.comment-reply-form[data-parent-id="${commentId}"]`);
+  if (form) {
+    form.classList.remove('hidden');
+    form.querySelector('.reply-input').focus();
+  }
+}
+
+/**
+ * Show edit form for a comment
+ */
+function showEditForm(commentId) {
+  // Hide action menus
+  document.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
+
+  const textEl = document.querySelector(`.comment-text[data-comment-id="${commentId}"]`);
+  if (!textEl) return;
+
+  const currentText = textEl.textContent;
+  const commentItem = textEl.closest('.comment-item');
+
+  textEl.innerHTML = `
+    <div class="comment-edit-form">
+      <textarea class="edit-textarea">${escapeHtml(currentText)}</textarea>
+      <div class="edit-actions">
+        <button class="btn btn-small btn-secondary cancel-edit">Cancel</button>
+        <button class="btn btn-small btn-primary save-edit" data-comment-id="${commentId}">Save</button>
+      </div>
+    </div>
+  `;
+
+  const textarea = textEl.querySelector('.edit-textarea');
+  textarea.focus();
+  textarea.selectionStart = textarea.value.length;
+
+  // Cancel edit
+  textEl.querySelector('.cancel-edit').addEventListener('click', () => {
+    textEl.textContent = currentText;
+  });
+
+  // Save edit
+  textEl.querySelector('.save-edit').addEventListener('click', () => {
+    const newText = textarea.value.trim();
+    if (newText && newText !== currentText) {
+      handleEditComment(commentId, newText);
+    } else {
+      textEl.textContent = currentText;
+    }
+  });
+}
+
+/**
+ * Handle reply submission
+ */
+function handleReply(parentId, text) {
+  if (!text) return;
+
+  if (isMockEntry) {
+    Storage.addMockComment(currentEntry.id, text, parentId);
+  } else {
+    Storage.addComment(currentEntry.id, text, parentId);
+    currentEntry = Storage.getEntry(currentEntry.id);
+  }
+
+  renderPostComments();
+}
+
+/**
+ * Handle comment edit
+ */
+function handleEditComment(commentId, newText) {
+  if (isMockEntry) {
+    Storage.editMockComment(currentEntry.id, commentId, newText);
+  } else {
+    Storage.editComment(currentEntry.id, commentId, newText);
+    currentEntry = Storage.getEntry(currentEntry.id);
+  }
+
+  renderPostComments();
+}
+
+/**
+ * Handle comment deletion
+ */
+function handleDeleteComment(commentId) {
+  if (!confirm('Are you sure you want to delete this comment?')) return;
+
+  if (isMockEntry) {
+    Storage.deleteMockComment(currentEntry.id, commentId);
+  } else {
+    Storage.deleteComment(currentEntry.id, commentId);
+    currentEntry = Storage.getEntry(currentEntry.id);
+  }
+
+  renderPostComments();
+}
+
+/**
+ * Handle vote on comment - updates vote without re-sorting
  */
 function handleVote(commentId, vote) {
   if (isMockEntry) {
@@ -181,7 +437,30 @@ function handleVote(commentId, vote) {
     currentEntry = Storage.getEntry(currentEntry.id);
   }
 
-  renderPostComments();
+  // Update just the vote display for this comment, not the whole list
+  const commentItem = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
+  if (commentItem) {
+    const userVote = Storage.getCommentVote(currentEntry.id, commentId);
+
+    // Get updated vote counts
+    let comments = isMockEntry ? Storage.getMockComments(currentEntry.id) : (currentEntry.comments || []);
+    const comment = comments.find(c => c.id === commentId);
+
+    if (comment) {
+      const voteScore = (comment.upvotes || 0) - (comment.downvotes || 0);
+
+      // Update buttons
+      const upBtn = commentItem.querySelector('.vote-btn.upvote');
+      const downBtn = commentItem.querySelector('.vote-btn.downvote');
+      const scoreEl = commentItem.querySelector('.vote-score');
+
+      upBtn.classList.toggle('active', userVote === 1);
+      downBtn.classList.toggle('active', userVote === -1);
+
+      scoreEl.textContent = voteScore;
+      scoreEl.className = `vote-score ${voteScore > 0 ? 'positive' : voteScore < 0 ? 'negative' : ''}`;
+    }
+  }
 }
 
 /**
@@ -191,19 +470,14 @@ function submitComment() {
   const input = document.getElementById('comment-input');
   const text = input.value.trim();
 
-  console.log('submitComment called, text:', text, 'isMockEntry:', isMockEntry, 'entryId:', currentEntry?.id);
-
   if (!text) return;
 
   // Add comment (will use "Anonymous" if no profile name set)
   if (isMockEntry) {
-    const result = Storage.addMockComment(currentEntry.id, text);
-    console.log('addMockComment result:', result);
+    Storage.addMockComment(currentEntry.id, text);
   } else {
     const result = Storage.addComment(currentEntry.id, text);
-    console.log('addComment result:', result);
     if (!result) {
-      console.error('Failed to add comment - entry not found:', currentEntry.id);
       alert('Failed to add comment. Please try again.');
       return;
     }
@@ -214,16 +488,12 @@ function submitComment() {
 
   // Refresh entry data and comments
   if (!isMockEntry) {
-    // Refresh from localStorage
     const refreshedEntry = Storage.getEntry(currentEntry.id);
-    console.log('Refreshed entry:', refreshedEntry);
-    console.log('Refreshed entry comments:', refreshedEntry?.comments);
     if (refreshedEntry) {
       currentEntry = refreshedEntry;
     }
   }
 
-  console.log('Calling renderPostComments, currentEntry.comments:', currentEntry?.comments);
   renderPostComments();
 }
 
@@ -391,6 +661,15 @@ async function initPostPage() {
         submitComment();
       }
     });
+
+    // Set up comment sort dropdown
+    const sortSelect = document.getElementById('comment-sort');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', () => {
+        commentSortOrder = sortSelect.value;
+        renderPostComments();
+      });
+    }
 
     // Set up hamburger menu
     setupHamburgerMenu();
