@@ -304,6 +304,60 @@ function initProfilePage() {
   document.getElementById('profileState').value = profile.location?.state || '';
   document.getElementById('profileCountry').value = profile.location?.country || '';
 
+  // Load equipment values
+  const machineBrandSelect = document.getElementById('machineBrand');
+  const grinderBrandSelect = document.getElementById('grinderBrand');
+  const customMachineBrandGroup = document.getElementById('customMachineBrandGroup');
+  const customGrinderBrandGroup = document.getElementById('customGrinderBrandGroup');
+
+  if (profile.equipment) {
+    // Machine
+    const machineBrand = profile.equipment.machine?.brand || '';
+    const machineModel = profile.equipment.machine?.model || '';
+
+    // Check if it's a predefined option
+    const machineOption = Array.from(machineBrandSelect.options).find(opt => opt.value === machineBrand);
+    if (machineOption && machineBrand !== 'custom') {
+      machineBrandSelect.value = machineBrand;
+    } else if (machineBrand) {
+      machineBrandSelect.value = 'custom';
+      document.getElementById('customMachineBrand').value = machineBrand;
+      customMachineBrandGroup.classList.remove('hidden');
+    }
+    document.getElementById('machineModel').value = machineModel;
+
+    // Grinder
+    const grinderBrand = profile.equipment.grinder?.brand || '';
+    const grinderModel = profile.equipment.grinder?.model || '';
+
+    const grinderOption = Array.from(grinderBrandSelect.options).find(opt => opt.value === grinderBrand);
+    if (grinderOption && grinderBrand !== 'custom') {
+      grinderBrandSelect.value = grinderBrand;
+    } else if (grinderBrand) {
+      grinderBrandSelect.value = 'custom';
+      document.getElementById('customGrinderBrand').value = grinderBrand;
+      customGrinderBrandGroup.classList.remove('hidden');
+    }
+    document.getElementById('grinderModel').value = grinderModel;
+  }
+
+  // Handle custom brand dropdowns
+  machineBrandSelect.addEventListener('change', () => {
+    if (machineBrandSelect.value === 'custom') {
+      customMachineBrandGroup.classList.remove('hidden');
+    } else {
+      customMachineBrandGroup.classList.add('hidden');
+    }
+  });
+
+  grinderBrandSelect.addEventListener('change', () => {
+    if (grinderBrandSelect.value === 'custom') {
+      customGrinderBrandGroup.classList.remove('hidden');
+    } else {
+      customGrinderBrandGroup.classList.add('hidden');
+    }
+  });
+
   // Set up unit toggles
   document.querySelectorAll('.unit-btn').forEach(btn => {
     const unit = btn.dataset.unit;
@@ -341,6 +395,14 @@ function initProfilePage() {
   document.getElementById('profile-form').addEventListener('submit', (e) => {
     e.preventDefault();
 
+    // Get equipment values
+    const machineBrand = machineBrandSelect.value === 'custom'
+      ? document.getElementById('customMachineBrand').value.trim()
+      : machineBrandSelect.value;
+    const grinderBrand = grinderBrandSelect.value === 'custom'
+      ? document.getElementById('customGrinderBrand').value.trim()
+      : grinderBrandSelect.value;
+
     const updatedProfile = {
       ...profile,
       name: document.getElementById('profileName').value.trim(),
@@ -348,6 +410,16 @@ function initProfilePage() {
         city: document.getElementById('profileCity').value.trim(),
         state: document.getElementById('profileState').value.trim(),
         country: document.getElementById('profileCountry').value.trim()
+      },
+      equipment: {
+        machine: {
+          brand: machineBrand,
+          model: document.getElementById('machineModel').value.trim()
+        },
+        grinder: {
+          brand: grinderBrand,
+          model: document.getElementById('grinderModel').value.trim()
+        }
       }
     };
 

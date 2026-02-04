@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Latte'd</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="onboarding-container">
+    <!-- Step 1: Welcome -->
+    <div id="step-welcome" class="onboarding-step active">
+      <div class="onboarding-icon">☕</div>
+      <h1>Welcome to Latte'd!</h1>
+      <p class="onboarding-subtitle">Let's get your setup configured so you can start tracking your latte art journey.</p>
+      <div class="onboarding-actions">
+        <button id="start-setup" class="btn btn-primary btn-large">Set Up My Equipment</button>
+        <button id="skip-all" class="btn btn-text">Skip for now</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Espresso Machine -->
+    <div id="step-machine" class="onboarding-step">
+      <div class="onboarding-progress">
+        <div class="progress-dot active"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+      </div>
+      <h2>What espresso machine do you use?</h2>
+      <p class="onboarding-hint">This helps track your setup and connect with others using similar equipment.</p>
+
+      <div class="onboarding-form">
+        <div class="form-group">
+          <label for="machine-brand">Machine Brand</label>
+          <select id="machine-brand" class="form-select">
+            <option value="">Select a brand...</option>
+            <option value="Breville">Breville</option>
+            <option value="De'Longhi">De'Longhi</option>
+            <option value="Gaggia">Gaggia</option>
+            <option value="Rancilio">Rancilio</option>
+            <option value="La Marzocco">La Marzocco</option>
+            <option value="Rocket">Rocket Espresso</option>
+            <option value="ECM">ECM</option>
+            <option value="Profitec">Profitec</option>
+            <option value="Lelit">Lelit</option>
+            <option value="Nuova Simonelli">Nuova Simonelli</option>
+            <option value="Slayer">Slayer</option>
+            <option value="Decent">Decent Espresso</option>
+            <option value="Ascaso">Ascaso</option>
+            <option value="Quick Mill">Quick Mill</option>
+            <option value="Bezzera">Bezzera</option>
+            <option value="custom">Other (specify below)</option>
+          </select>
+        </div>
+
+        <div id="custom-machine-brand-group" class="form-group hidden">
+          <label for="custom-machine-brand">Custom Brand</label>
+          <input type="text" id="custom-machine-brand" class="form-input" placeholder="Enter brand name">
+        </div>
+
+        <div class="form-group">
+          <label for="machine-model">Model <span class="optional-tag">(optional)</span></label>
+          <input type="text" id="machine-model" class="form-input" placeholder="e.g., Bambino Plus, Linea Mini">
+        </div>
+      </div>
+
+      <div class="onboarding-actions">
+        <button id="machine-next" class="btn btn-primary">Continue</button>
+        <button id="machine-skip" class="btn btn-text">Skip this step</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Grinder -->
+    <div id="step-grinder" class="onboarding-step">
+      <div class="onboarding-progress">
+        <div class="progress-dot complete"></div>
+        <div class="progress-dot active"></div>
+        <div class="progress-dot"></div>
+      </div>
+      <h2>What grinder do you use?</h2>
+      <p class="onboarding-hint">A good grinder is essential for great espresso.</p>
+
+      <div class="onboarding-form">
+        <div class="form-group">
+          <label for="grinder-brand">Grinder Brand</label>
+          <select id="grinder-brand" class="form-select">
+            <option value="">Select a brand...</option>
+            <option value="Baratza">Baratza</option>
+            <option value="Eureka">Eureka</option>
+            <option value="Niche">Niche</option>
+            <option value="Fellow">Fellow</option>
+            <option value="DF64">DF64 / Turin</option>
+            <option value="Comandante">Comandante</option>
+            <option value="1Zpresso">1Zpresso</option>
+            <option value="Timemore">Timemore</option>
+            <option value="Mazzer">Mazzer</option>
+            <option value="Mahlkonig">Mahlkonig</option>
+            <option value="Lagom">Option-O / Lagom</option>
+            <option value="Weber">Weber Workshops</option>
+            <option value="Breville">Breville</option>
+            <option value="Rancilio">Rancilio</option>
+            <option value="custom">Other (specify below)</option>
+          </select>
+        </div>
+
+        <div id="custom-grinder-brand-group" class="form-group hidden">
+          <label for="custom-grinder-brand">Custom Brand</label>
+          <input type="text" id="custom-grinder-brand" class="form-input" placeholder="Enter brand name">
+        </div>
+
+        <div class="form-group">
+          <label for="grinder-model">Model <span class="optional-tag">(optional)</span></label>
+          <input type="text" id="grinder-model" class="form-input" placeholder="e.g., Sette 270, Mignon Specialita">
+        </div>
+      </div>
+
+      <div class="onboarding-actions">
+        <button id="grinder-back" class="btn btn-secondary">Back</button>
+        <button id="grinder-next" class="btn btn-primary">Continue</button>
+        <button id="grinder-skip" class="btn btn-text">Skip this step</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Default Parameters -->
+    <div id="step-defaults" class="onboarding-step">
+      <div class="onboarding-progress">
+        <div class="progress-dot complete"></div>
+        <div class="progress-dot complete"></div>
+        <div class="progress-dot active"></div>
+      </div>
+      <h2>Set your default parameters</h2>
+      <p class="onboarding-hint">These will be pre-filled when you log a new pour. You can always change them later.</p>
+
+      <div class="onboarding-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="default-milk">Preferred Milk</label>
+            <select id="default-milk" class="form-select">
+              <option value="">Select...</option>
+              <option value="Whole">Whole</option>
+              <option value="2%">2%</option>
+              <option value="Skim">Skim</option>
+              <option value="Oat">Oat</option>
+              <option value="Almond">Almond</option>
+              <option value="Soy">Soy</option>
+              <option value="Coconut">Coconut</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="default-pitcher">Pitcher Size</label>
+            <select id="default-pitcher" class="form-select">
+              <option value="">Select...</option>
+              <option value="12oz">12oz</option>
+              <option value="17oz">17oz</option>
+              <option value="20oz">20oz</option>
+              <option value="32oz">32oz</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="default-cup">Cup Type</label>
+            <select id="default-cup" class="form-select">
+              <option value="">Select...</option>
+              <option value="Ceramic mug">Ceramic mug</option>
+              <option value="Cappuccino cup">Cappuccino cup</option>
+              <option value="Latte bowl">Latte bowl</option>
+              <option value="Glass cup">Glass cup</option>
+              <option value="Paper cup">Paper cup</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="default-cup-volume">Cup Volume (ml)</label>
+            <input type="number" id="default-cup-volume" class="form-input" placeholder="e.g., 180">
+          </div>
+        </div>
+      </div>
+
+      <div class="onboarding-actions">
+        <button id="defaults-back" class="btn btn-secondary">Back</button>
+        <button id="defaults-finish" class="btn btn-primary">Finish Setup</button>
+        <button id="defaults-skip" class="btn btn-text">Skip this step</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Complete -->
+    <div id="step-complete" class="onboarding-step">
+      <div class="onboarding-icon success">✓</div>
+      <h1>You're all set!</h1>
+      <p class="onboarding-subtitle">Your equipment and preferences have been saved. You can update them anytime in Profile & Settings.</p>
+      <div class="onboarding-actions">
+        <a href="index.html" class="btn btn-primary btn-large">Start Exploring</a>
+        <a href="entry.html" class="btn btn-secondary btn-large">Log My First Pour</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/onboarding.js"></script>
+</body>
+</html>

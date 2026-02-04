@@ -93,7 +93,7 @@
       const result = await Auth.register(email, password, username);
 
       if (result.success) {
-        window.location.href = 'index.html';
+        window.location.href = 'onboarding.html';
       } else {
         errorEl.textContent = result.error;
         errorEl.classList.remove('hidden');
