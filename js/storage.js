@@ -766,7 +766,9 @@ function getFeedLocations() {
  * Add comment to mock entry (stores in localStorage)
  */
 function addMockComment(entryId, commentText) {
+  console.log('addMockComment called:', entryId, commentText);
   const profile = getProfile();
+  console.log('Profile:', profile);
   const comment = {
     id: generateId(),
     userId: profile.id,
@@ -776,6 +778,7 @@ function addMockComment(entryId, commentText) {
     upvotes: 0,
     downvotes: 0
   };
+  console.log('Created comment:', comment);
 
   // Store mock comments separately
   const mockCommentsKey = `mock_comments_${entryId}`;
@@ -783,6 +786,7 @@ function addMockComment(entryId, commentText) {
   const comments = existing ? JSON.parse(existing) : [];
   comments.push(comment);
   localStorage.setItem(mockCommentsKey, JSON.stringify(comments));
+  console.log('Saved comments to localStorage:', mockCommentsKey, comments);
 
   // Simulate a notification from the post author (after a delay in real app)
   const mockEntry = MOCK_ENTRIES.find(e => e.id === entryId);
@@ -806,13 +810,17 @@ function addMockComment(entryId, commentText) {
  * Get comments for mock entry (with vote counts)
  */
 function getMockComments(entryId) {
+  console.log('getMockComments called:', entryId);
   const mockEntry = MOCK_ENTRIES.find(e => e.id === entryId);
   const baseComments = mockEntry?.comments || [];
+  console.log('Base comments from mock entry:', baseComments.length);
 
   // Get user-added comments
   const mockCommentsKey = `mock_comments_${entryId}`;
   const existing = localStorage.getItem(mockCommentsKey);
+  console.log('localStorage key:', mockCommentsKey, 'value:', existing);
   const userComments = existing ? JSON.parse(existing) : [];
+  console.log('User comments:', userComments.length);
 
   // Get vote counts
   const mockVotesKey = `mock_votes_${entryId}`;

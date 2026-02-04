@@ -114,13 +114,17 @@ function renderComments() {
   const container = document.getElementById('comments-thread');
   const heading = document.getElementById('comments-heading');
 
+  console.log('renderComments called, container:', !!container, 'currentEntry:', !!currentEntry);
+
   if (!container || !currentEntry) return;
 
   let comments = [];
   if (isMockEntry) {
     comments = Storage.getMockComments(currentEntry.id);
+    console.log('Got mock comments:', comments);
   } else {
     comments = currentEntry.comments || [];
+    console.log('Got local comments:', comments);
   }
 
   if (heading) {
@@ -177,13 +181,17 @@ function submitComment() {
   const input = document.getElementById('comment-input');
   const text = input.value.trim();
 
+  console.log('submitComment called, text:', text, 'isMockEntry:', isMockEntry, 'entryId:', currentEntry?.id);
+
   if (!text) return;
 
   // Add comment (will use "Anonymous" if no profile name set)
   if (isMockEntry) {
-    Storage.addMockComment(currentEntry.id, text);
+    const result = Storage.addMockComment(currentEntry.id, text);
+    console.log('addMockComment result:', result);
   } else {
     const result = Storage.addComment(currentEntry.id, text);
+    console.log('addComment result:', result);
     if (!result) {
       console.error('Failed to add comment - entry not found:', currentEntry.id);
       alert('Failed to add comment. Please try again.');
@@ -198,10 +206,13 @@ function submitComment() {
   if (!isMockEntry) {
     // Refresh from localStorage
     const refreshedEntry = Storage.getEntry(currentEntry.id);
+    console.log('Refreshed entry:', refreshedEntry);
     if (refreshedEntry) {
       currentEntry = refreshedEntry;
     }
   }
+
+  console.log('Calling renderComments...');
   renderComments();
 }
 
