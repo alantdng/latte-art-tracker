@@ -111,21 +111,26 @@ function renderComment(comment, entryId) {
  * Render all comments
  */
 function renderComments() {
-  const container = document.getElementById('comments-thread');
-  const heading = document.getElementById('comments-heading');
+  try {
+    console.log('=== renderComments START ===');
+    const container = document.getElementById('comments-thread');
+    const heading = document.getElementById('comments-heading');
 
-  console.log('renderComments called, container:', !!container, 'currentEntry:', !!currentEntry);
+    console.log('container:', container, 'heading:', heading, 'currentEntry:', !!currentEntry, 'isMockEntry:', isMockEntry);
 
-  if (!container || !currentEntry) return;
+    if (!container || !currentEntry) {
+      console.log('Early return - container or currentEntry missing');
+      return;
+    }
 
-  let comments = [];
-  if (isMockEntry) {
-    comments = Storage.getMockComments(currentEntry.id);
-    console.log('Got mock comments:', comments);
-  } else {
-    comments = currentEntry.comments || [];
-    console.log('Got local comments:', comments);
-  }
+    let comments = [];
+    if (isMockEntry) {
+      comments = Storage.getMockComments(currentEntry.id);
+      console.log('Got mock comments:', comments);
+    } else {
+      comments = currentEntry.comments || [];
+      console.log('Got local comments:', comments, 'length:', comments.length);
+    }
 
   if (heading) {
     heading.textContent = `Comments (${comments.length})`;
@@ -157,6 +162,11 @@ function renderComments() {
       handleVote(commentId, vote);
     });
   });
+
+  console.log('=== renderComments END ===');
+  } catch (error) {
+    console.error('Error in renderComments:', error);
+  }
 }
 
 /**
@@ -207,12 +217,13 @@ function submitComment() {
     // Refresh from localStorage
     const refreshedEntry = Storage.getEntry(currentEntry.id);
     console.log('Refreshed entry:', refreshedEntry);
+    console.log('Refreshed entry comments:', refreshedEntry?.comments);
     if (refreshedEntry) {
       currentEntry = refreshedEntry;
     }
   }
 
-  console.log('Calling renderComments...');
+  console.log('Calling renderComments, currentEntry.comments:', currentEntry?.comments);
   renderComments();
 }
 
