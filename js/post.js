@@ -89,6 +89,8 @@ function renderComment(comment, entryId, allComments, depth = 0) {
   const voteScore = (comment.upvotes || 0) - (comment.downvotes || 0);
   const isOwner = comment.userId === profile.id;
   const editedTag = comment.updatedAt ? `<span class="comment-edited">(edited)</span>` : '';
+  const isSaved = Storage.isCommentSaved(entryId, comment.id);
+  const isReported = Storage.isCommentReported(entryId, comment.id);
 
   // Get replies to this comment
   const replies = allComments.filter(c => c.parentId === comment.id);
@@ -99,6 +101,24 @@ function renderComment(comment, entryId, allComments, depth = 0) {
   const maxDepth = 4; // Max nesting level
   const indentClass = depth > 0 ? 'comment-reply' : '';
   const depthStyle = depth > 0 && depth <= maxDepth ? `margin-left: ${Math.min(depth, maxDepth) * 20}px;` : '';
+
+  // Build three-dot menu based on ownership
+  let menuContent = '';
+  if (isOwner) {
+    menuContent = `
+      <button class="action-edit" data-comment-id="${comment.id}">Edit</button>
+      <button class="action-delete" data-comment-id="${comment.id}">Delete</button>
+    `;
+  } else {
+    menuContent = `
+      <button class="action-save ${isSaved ? 'saved' : ''}" data-comment-id="${comment.id}">
+        ${isSaved ? 'Unsave' : 'Save'}
+      </button>
+      <button class="action-report ${isReported ? 'reported' : ''}" data-comment-id="${comment.id}" ${isReported ? 'disabled' : ''}>
+        ${isReported ? 'Reported' : 'Report'}
+      </button>
+    `;
+  }
 
   return `
     <div class="comment-item ${indentClass}" data-comment-id="${comment.id}" style="${depthStyle}">
@@ -116,18 +136,18 @@ function renderComment(comment, entryId, allComments, depth = 0) {
           <span class="comment-author">${comment.userName}</span>
           <span class="comment-time">${formatRelativeTime(comment.createdAt)}</span>
           ${editedTag}
+        </div>
+        <p class="comment-text" data-comment-id="${comment.id}">${escapeHtml(comment.text)}</p>
+        <div class="comment-inline-actions">
+          <button class="inline-action action-reply" data-comment-id="${comment.id}">Reply</button>
+          <button class="inline-action action-share" data-comment-id="${comment.id}" data-entry-id="${entryId}">Share</button>
           <div class="comment-actions-wrapper">
-            <button class="comment-actions-btn" data-comment-id="${comment.id}">⋯</button>
+            <button class="comment-actions-btn" data-comment-id="${comment.id}">⋮</button>
             <div class="comment-actions-menu hidden" data-comment-id="${comment.id}">
-              <button class="action-reply" data-comment-id="${comment.id}">Reply</button>
-              ${isOwner ? `
-                <button class="action-edit" data-comment-id="${comment.id}">Edit</button>
-                <button class="action-delete" data-comment-id="${comment.id}">Delete</button>
-              ` : ''}
+              ${menuContent}
             </div>
           </div>
         </div>
-        <p class="comment-text" data-comment-id="${comment.id}">${escapeHtml(comment.text)}</p>
         <div class="comment-reply-form hidden" data-parent-id="${comment.id}">
           <input type="text" class="reply-input" placeholder="Write a reply..." maxlength="500">
           <div class="reply-actions">
@@ -263,12 +283,40 @@ function setupCommentEventHandlers(container) {
     container.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
   });
 
-  // Reply buttons
+  // Reply buttons (now inline)
   container.querySelectorAll('.action-reply').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const commentId = btn.dataset.commentId;
       showReplyForm(commentId);
+    });
+  });
+
+  // Share buttons
+  container.querySelectorAll('.action-share').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      const entryId = btn.dataset.entryId;
+      handleShareComment(entryId, commentId, btn);
+    });
+  });
+
+  // Save buttons
+  container.querySelectorAll('.action-save').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      handleSaveComment(commentId, btn);
+    });
+  });
+
+  // Report buttons
+  container.querySelectorAll('.action-report').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const commentId = btn.dataset.commentId;
+      handleReportComment(commentId, btn);
     });
   });
 
@@ -423,6 +471,104 @@ function handleDeleteComment(commentId) {
   }
 
   renderPostComments();
+}
+
+/**
+ * Scroll to a specific comment and highlight it
+ */
+function scrollToComment(commentId) {
+  setTimeout(() => {
+    const commentEl = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
+    if (commentEl) {
+      commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      commentEl.classList.add('comment-highlight');
+      setTimeout(() => {
+        commentEl.classList.remove('comment-highlight');
+      }, 3000);
+    }
+  }, 100);
+}
+
+/**
+ * Handle share comment - copy URL to clipboard
+ */
+function handleShareComment(entryId, commentId, btn) {
+  const mockParam = isMockEntry ? '&mock=true' : '';
+  const url = `${window.location.origin}${window.location.pathname}?id=${entryId}${mockParam}&comment=${commentId}`;
+
+  navigator.clipboard.writeText(url).then(() => {
+    // Show feedback
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = url;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Share';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+
+  // Close any open menus
+  document.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
+}
+
+/**
+ * Handle save/unsave comment
+ */
+function handleSaveComment(commentId, btn) {
+  const entryId = currentEntry.id;
+  const isSaved = Storage.isCommentSaved(entryId, commentId);
+
+  if (isSaved) {
+    Storage.unsaveComment(entryId, commentId);
+    btn.textContent = 'Save';
+    btn.classList.remove('saved');
+  } else {
+    Storage.saveCommentToList(entryId, commentId);
+    btn.textContent = 'Unsave';
+    btn.classList.add('saved');
+  }
+
+  // Close the menu
+  document.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
+}
+
+/**
+ * Handle report comment
+ */
+function handleReportComment(commentId, btn) {
+  if (btn.disabled) return;
+
+  const reason = prompt('Why are you reporting this comment? (optional)');
+
+  // User cancelled
+  if (reason === null) return;
+
+  Storage.reportComment(currentEntry.id, commentId, reason);
+
+  btn.textContent = 'Reported';
+  btn.classList.add('reported');
+  btn.disabled = true;
+
+  // Close the menu
+  document.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
+
+  // Show confirmation
+  alert('Thank you for your report. We will review this comment.');
 }
 
 /**
@@ -650,6 +796,12 @@ async function initPostPage() {
 
     // Render comments
     renderPostComments();
+
+    // Check if we should scroll to a specific comment
+    const commentId = params.get('comment');
+    if (commentId) {
+      scrollToComment(commentId);
+    }
 
     // Set up comment submission
     const commentInput = document.getElementById('comment-input');

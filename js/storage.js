@@ -15,6 +15,8 @@ const NOTIFICATIONS_KEY = 'latte_notifications';
 const VOTES_KEY = 'latte_votes';
 const LOADOUTS_KEY = 'latte_loadouts';
 const ACTIVE_LOADOUT_KEY = 'latte_active_loadout';
+const SAVED_COMMENTS_KEY = 'latte_saved_comments';
+const REPORTED_COMMENTS_KEY = 'latte_reported_comments';
 
 let idb = null;
 
@@ -1198,6 +1200,85 @@ function getMockCommentVotes(entryId, commentId) {
 }
 
 // ==========================================
+// Saved Comments Functions
+// ==========================================
+
+/**
+ * Get all saved comment IDs
+ */
+function getSavedComments() {
+  const data = localStorage.getItem(SAVED_COMMENTS_KEY);
+  return data ? JSON.parse(data) : [];
+}
+
+/**
+ * Save a comment
+ */
+function saveCommentToList(entryId, commentId) {
+  const saved = getSavedComments();
+  const key = `${entryId}_${commentId}`;
+  if (!saved.includes(key)) {
+    saved.push(key);
+    localStorage.setItem(SAVED_COMMENTS_KEY, JSON.stringify(saved));
+  }
+}
+
+/**
+ * Unsave a comment
+ */
+function unsaveComment(entryId, commentId) {
+  const saved = getSavedComments();
+  const key = `${entryId}_${commentId}`;
+  const filtered = saved.filter(k => k !== key);
+  localStorage.setItem(SAVED_COMMENTS_KEY, JSON.stringify(filtered));
+}
+
+/**
+ * Check if a comment is saved
+ */
+function isCommentSaved(entryId, commentId) {
+  const saved = getSavedComments();
+  const key = `${entryId}_${commentId}`;
+  return saved.includes(key);
+}
+
+/**
+ * Report a comment
+ */
+function reportComment(entryId, commentId, reason = '') {
+  const reported = getReportedComments();
+  const key = `${entryId}_${commentId}`;
+
+  // Store the report
+  reported[key] = {
+    entryId,
+    commentId,
+    reason,
+    reportedAt: Date.now()
+  };
+
+  localStorage.setItem(REPORTED_COMMENTS_KEY, JSON.stringify(reported));
+  return true;
+}
+
+/**
+ * Get reported comments
+ */
+function getReportedComments() {
+  const data = localStorage.getItem(REPORTED_COMMENTS_KEY);
+  return data ? JSON.parse(data) : {};
+}
+
+/**
+ * Check if a comment has been reported
+ */
+function isCommentReported(entryId, commentId) {
+  const reported = getReportedComments();
+  const key = `${entryId}_${commentId}`;
+  return !!reported[key];
+}
+
+// ==========================================
 // Loadout Functions (Equipment Presets)
 // ==========================================
 
@@ -1368,6 +1449,13 @@ window.Storage = {
   voteComment,
   voteMockComment,
   getMockCommentVotes,
+  // Saved/Reported Comments
+  getSavedComments,
+  saveCommentToList,
+  unsaveComment,
+  isCommentSaved,
+  reportComment,
+  isCommentReported,
   // Loadouts
   getLoadouts,
   createLoadout,

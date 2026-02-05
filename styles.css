@@ -2654,7 +2654,37 @@ body {
   padding-left: var(--spacing-sm);
 }
 
-/* Comment actions menu */
+/* Inline comment actions (Reply, Share) */
+.comment-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.inline-action {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.inline-action:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+
+.inline-action.copied {
+  color: var(--color-primary);
+}
+
+/* Comment actions menu (three dots) */
 .comment-actions-wrapper {
   position: relative;
   margin-left: auto;
@@ -2678,7 +2708,7 @@ body {
 
 .comment-actions-menu {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   right: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -2707,6 +2737,34 @@ body {
 
 .comment-actions-menu .action-delete {
   color: var(--color-error);
+}
+
+.comment-actions-menu .action-report {
+  color: var(--color-error);
+}
+
+.comment-actions-menu .action-report.reported,
+.comment-actions-menu .action-report:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.comment-actions-menu .action-save.saved {
+  color: var(--color-primary);
+}
+
+/* Comment highlight (when sharing/linking) */
+.comment-highlight {
+  animation: commentHighlight 3s ease-out;
+}
+
+@keyframes commentHighlight {
+  0% {
+    background: var(--color-primary-light, rgba(139, 69, 19, 0.15));
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 /* Edited tag */
