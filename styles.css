@@ -1569,7 +1569,7 @@ body {
 .comment-input {
   flex: 1;
   padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 0.9375rem;
+  font-size: 1rem; /* 16px prevents iOS zoom on focus */
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -2503,6 +2503,67 @@ body {
     width: 20px;
     height: 20px;
   }
+
+  /* Mobile touch-friendly comment actions */
+  .comment-inline-actions {
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+
+  .inline-action {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+  }
+
+  .comment-actions-btn {
+    padding: 8px 12px;
+    min-height: 36px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Menu opens downward on mobile to prevent clipping */
+  .comment-actions-menu {
+    bottom: auto;
+    top: 100%;
+    min-width: 120px;
+  }
+
+  .comment-actions-menu button {
+    padding: var(--spacing-md);
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+  /* Larger touch targets for vote buttons */
+  .comment-votes .vote-btn {
+    min-height: 32px;
+    min-width: 28px;
+  }
+
+  /* Reply form adjustments */
+  .comment-reply-form {
+    padding: var(--spacing-md);
+  }
+
+  .comment-reply-form .reply-input {
+    font-size: 1rem;
+    padding: var(--spacing-md);
+  }
+
+  .reply-actions {
+    gap: var(--spacing-md);
+  }
+
+  .reply-actions .btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-height: 40px;
+  }
 }
 
 /* ==========================================
@@ -2787,7 +2848,7 @@ body {
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 0.9375rem;
+  font-size: 1rem; /* 16px prevents iOS zoom on focus */
   margin-bottom: var(--spacing-sm);
 }
 
@@ -2898,6 +2959,58 @@ body {
 
 .notif-badge.hidden {
   display: none;
+}
+
+/* Mobile touch states */
+@media (hover: none) and (pointer: coarse) {
+  /* Active states for touch devices */
+  .inline-action:active {
+    background: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  .vote-btn:active {
+    background: var(--color-accent);
+  }
+
+  .comment-actions-btn:active {
+    background: var(--color-accent);
+  }
+
+  .comment-actions-menu button:active {
+    background: var(--color-accent);
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+  }
+
+  .feed-card:active {
+    transform: scale(0.99);
+  }
+
+  .notif-icon-wrapper:active {
+    background-color: var(--color-accent);
+  }
+
+  /* Disable hover effects that don't work well on touch */
+  .inline-action:hover,
+  .vote-btn:hover,
+  .comment-actions-btn:hover {
+    background: none;
+    color: inherit;
+  }
+
+  /* Larger touch targets for hamburger */
+  .hamburger-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .notif-icon-wrapper {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* ==========================================
