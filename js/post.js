@@ -5,6 +5,7 @@
 
 let currentEntry = null;
 let isMockEntry = false;
+let documentClickHandler = null; // Track the click handler to avoid memory leaks
 
 /**
  * Format relative time
@@ -278,10 +279,14 @@ function setupCommentEventHandlers(container) {
     });
   });
 
-  // Close menus on outside click
-  document.addEventListener('click', () => {
+  // Close menus on outside click (remove old handler first to prevent memory leak)
+  if (documentClickHandler) {
+    document.removeEventListener('click', documentClickHandler);
+  }
+  documentClickHandler = () => {
     container.querySelectorAll('.comment-actions-menu').forEach(m => m.classList.add('hidden'));
-  });
+  };
+  document.addEventListener('click', documentClickHandler);
 
   // Reply buttons (now inline)
   container.querySelectorAll('.action-reply').forEach(btn => {
@@ -343,7 +348,9 @@ function setupCommentEventHandlers(container) {
     btn.addEventListener('click', () => {
       const parentId = btn.dataset.parentId;
       const form = container.querySelector(`.comment-reply-form[data-parent-id="${parentId}"]`);
+      if (!form) return;
       const input = form.querySelector('.reply-input');
+      if (!input) return;
       handleReply(parentId, input.value.trim());
     });
   });
@@ -701,7 +708,7 @@ async function initPostPage() {
     // Follow button (only for non-mock, non-self entries)
     const followBtn = document.getElementById('follow-btn');
     const isOwnEntry = currentEntry.user.id === profile.id;
-    if (!isMock && !isOwnEntry) {
+    if (!isMockEntry && !isOwnEntry) {
       const isFollowing = Storage.isFollowing(currentEntry.user.id);
       followBtn.classList.remove('hidden');
       followBtn.classList.toggle('following', isFollowing);
