@@ -113,6 +113,351 @@ async function deleteMedia(id) {
   });
 }
 
+// ==========================================
+// Cloud Sync Functions (Firebase)
+// ==========================================
+
+let syncInProgress = false;
+let lastSyncTime = 0;
+
+/**
+ * Get current user ID from Firebase Auth
+ */
+function getCurrentUserId() {
+  const user = window.firebaseAuth?.currentUser;
+  return user ? user.uid : null;
+}
+
+/**
+ * Upload media to Firebase Storage
+ */
+async function uploadMediaToCloud(entryId, blob) {
+  const userId = getCurrentUserId();
+  if (!userId || !blob) return null;
+
+  try {
+    const storage = window.firebaseStorage;
+    const ref = storage.ref(`users/${userId}/entries/${entryId}/media`);
+
+    const snapshot = await ref.put(blob);
+    const downloadUrl = await snapshot.ref.getDownloadURL();
+
+    console.log('Media uploaded to cloud:', entryId);
+    return downloadUrl;
+  } catch (error) {
+    console.error('Error uploading media to cloud:', error);
+    return null;
+  }
+}
+
+/**
+ * Download media from Firebase Storage
+ */
+async function downloadMediaFromCloud(entryId) {
+  const userId = getCurrentUserId();
+  if (!userId) return null;
+
+  try {
+    const storage = window.firebaseStorage;
+    const ref = storage.ref(`users/${userId}/entries/${entryId}/media`);
+
+    const url = await ref.getDownloadURL();
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    console.log('Media downloaded from cloud:', entryId);
+    return blob;
+  } catch (error) {
+    // Media might not exist in cloud yet
+    if (error.code !== 'storage/object-not-found') {
+      console.error('Error downloading media from cloud:', error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Delete media from Firebase Storage
+ */
+async function deleteMediaFromCloud(entryId) {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+
+  try {
+    const storage = window.firebaseStorage;
+    const ref = storage.ref(`users/${userId}/entries/${entryId}/media`);
+    await ref.delete();
+    console.log('Media deleted from cloud:', entryId);
+  } catch (error) {
+    if (error.code !== 'storage/object-not-found') {
+      console.error('Error deleting media from cloud:', error);
+    }
+  }
+}
+
+/**
+ * Sync a single entry to Firestore
+ */
+async function syncEntryToCloud(entry, mediaBlob = null) {
+  const userId = getCurrentUserId();
+  if (!userId) return false;
+
+  try {
+    const db = window.firebaseDb;
+    const entryRef = db.collection('users').doc(userId).collection('entries').doc(entry.id);
+
+    // Upload media if provided
+    let mediaUrl = entry.media?.cloudUrl || null;
+    if (mediaBlob) {
+      mediaUrl = await uploadMediaToCloud(entry.id, mediaBlob);
+    }
+
+    // Prepare entry data for Firestore (without large thumbnail)
+    const cloudEntry = {
+      ...entry,
+      media: {
+        type: entry.media.type,
+        cloudUrl: mediaUrl,
+        // Don't store base64 thumbnail in Firestore - too large
+        thumbnail: null
+      },
+      syncedAt: Date.now(),
+      userId: userId
+    };
+
+    await entryRef.set(cloudEntry);
+    console.log('Entry synced to cloud:', entry.id);
+
+    // Update local entry with cloud URL
+    if (mediaUrl) {
+      const entries = getEntries();
+      const index = entries.findIndex(e => e.id === entry.id);
+      if (index !== -1) {
+        entries[index].media.cloudUrl = mediaUrl;
+        saveEntries(entries);
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error syncing entry to cloud:', error);
+    return false;
+  }
+}
+
+/**
+ * Delete entry from Firestore
+ */
+async function deleteEntryFromCloud(entryId) {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+
+  try {
+    const db = window.firebaseDb;
+    await db.collection('users').doc(userId).collection('entries').doc(entryId).delete();
+    await deleteMediaFromCloud(entryId);
+    console.log('Entry deleted from cloud:', entryId);
+  } catch (error) {
+    console.error('Error deleting entry from cloud:', error);
+  }
+}
+
+/**
+ * Sync all local entries to cloud (for initial upload)
+ */
+async function syncAllToCloud(progressCallback = null) {
+  const userId = getCurrentUserId();
+  if (!userId) {
+    console.log('No user logged in, skipping cloud sync');
+    return;
+  }
+
+  const entries = getEntries();
+  const total = entries.length;
+  let synced = 0;
+
+  console.log(`Starting cloud sync for ${total} entries...`);
+
+  for (const entry of entries) {
+    // Get media blob from local IndexedDB
+    const mediaBlob = await getMedia(entry.id);
+
+    // Only upload if we have local media and no cloud URL yet
+    const needsMediaUpload = mediaBlob && !entry.media?.cloudUrl;
+
+    await syncEntryToCloud(entry, needsMediaUpload ? mediaBlob : null);
+
+    synced++;
+    if (progressCallback) {
+      progressCallback(synced, total);
+    }
+  }
+
+  console.log(`Cloud sync complete: ${synced}/${total} entries`);
+  lastSyncTime = Date.now();
+}
+
+/**
+ * Download all entries from cloud and merge with local
+ */
+async function syncFromCloud(progressCallback = null) {
+  const userId = getCurrentUserId();
+  if (!userId) {
+    console.log('No user logged in, skipping cloud download');
+    return;
+  }
+
+  if (syncInProgress) {
+    console.log('Sync already in progress, skipping');
+    return;
+  }
+
+  syncInProgress = true;
+
+  try {
+    const db = window.firebaseDb;
+    const snapshot = await db.collection('users').doc(userId).collection('entries')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const cloudEntries = [];
+    snapshot.forEach(doc => {
+      cloudEntries.push(doc.data());
+    });
+
+    console.log(`Found ${cloudEntries.length} entries in cloud`);
+
+    const localEntries = getEntries();
+    const localEntryIds = new Set(localEntries.map(e => e.id));
+
+    let downloaded = 0;
+    const total = cloudEntries.length;
+
+    // Process cloud entries
+    for (const cloudEntry of cloudEntries) {
+      // Check if we have this entry locally
+      if (!localEntryIds.has(cloudEntry.id)) {
+        // Download media from cloud
+        let mediaBlob = null;
+        if (cloudEntry.media?.cloudUrl) {
+          mediaBlob = await downloadMediaFromCloud(cloudEntry.id);
+          if (mediaBlob) {
+            // Save media to local IndexedDB
+            await saveMedia(cloudEntry.id, mediaBlob);
+            // Create thumbnail locally
+            cloudEntry.media.thumbnail = await createThumbnail(mediaBlob, cloudEntry.media.type);
+          }
+        }
+
+        // Add to local entries
+        localEntries.push(cloudEntry);
+        console.log('Downloaded entry from cloud:', cloudEntry.id);
+      } else {
+        // Entry exists locally - check if cloud version is newer
+        const localEntry = localEntries.find(e => e.id === cloudEntry.id);
+        if (localEntry && cloudEntry.syncedAt > (localEntry.syncedAt || 0)) {
+          // Cloud is newer, update local (but keep local media)
+          const index = localEntries.findIndex(e => e.id === cloudEntry.id);
+          localEntries[index] = {
+            ...cloudEntry,
+            media: {
+              ...cloudEntry.media,
+              thumbnail: localEntry.media?.thumbnail // Keep local thumbnail
+            }
+          };
+          console.log('Updated entry from cloud:', cloudEntry.id);
+        }
+      }
+
+      downloaded++;
+      if (progressCallback) {
+        progressCallback(downloaded, total);
+      }
+    }
+
+    // Sort by date and save
+    localEntries.sort((a, b) => b.createdAt - a.createdAt);
+    saveEntries(localEntries);
+
+    console.log('Cloud sync download complete');
+    lastSyncTime = Date.now();
+  } catch (error) {
+    console.error('Error syncing from cloud:', error);
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+/**
+ * Full bidirectional sync
+ */
+async function performFullSync(progressCallback = null) {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+
+  console.log('Performing full bidirectional sync...');
+
+  // First, download from cloud
+  await syncFromCloud(progressCallback);
+
+  // Then, upload any local entries that aren't in cloud
+  await syncAllToCloud(progressCallback);
+
+  console.log('Full sync complete');
+}
+
+/**
+ * Sync user profile to cloud
+ */
+async function syncProfileToCloud() {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+
+  try {
+    const profile = getProfile();
+    const db = window.firebaseDb;
+
+    await db.collection('users').doc(userId).set({
+      profile: profile,
+      updatedAt: Date.now()
+    }, { merge: true });
+
+    console.log('Profile synced to cloud');
+  } catch (error) {
+    console.error('Error syncing profile to cloud:', error);
+  }
+}
+
+/**
+ * Download user profile from cloud
+ */
+async function syncProfileFromCloud() {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+
+  try {
+    const db = window.firebaseDb;
+    const doc = await db.collection('users').doc(userId).get();
+
+    if (doc.exists && doc.data().profile) {
+      const cloudProfile = doc.data().profile;
+      const localProfile = getProfile();
+
+      // Merge cloud profile with local, preferring cloud data
+      const mergedProfile = {
+        ...localProfile,
+        ...cloudProfile,
+        id: localProfile.id // Keep local ID consistent
+      };
+
+      saveProfile(mergedProfile);
+      console.log('Profile downloaded from cloud');
+    }
+  } catch (error) {
+    console.error('Error downloading profile from cloud:', error);
+  }
+}
+
 /**
  * Get all entries metadata from localStorage
  */
@@ -164,11 +509,18 @@ async function createEntry(entryData, mediaBlob) {
     isPublic: entryData.isPublic || false
   };
 
+  // Save media locally first
   await saveMedia(id, mediaBlob);
 
+  // Save entry locally
   const entries = getEntries();
   entries.unshift(entry);
   saveEntries(entries);
+
+  // Sync to cloud in background (don't await to avoid blocking)
+  syncEntryToCloud(entry, mediaBlob).catch(err => {
+    console.error('Background cloud sync failed:', err);
+  });
 
   return entry;
 }
@@ -192,7 +544,8 @@ async function updateEntry(id, entryData, mediaBlob = null) {
     await saveMedia(id, mediaBlob);
     entry.media = {
       type: entryData.media.type,
-      thumbnail
+      thumbnail,
+      cloudUrl: null // Reset cloud URL since media changed
     };
   }
 
@@ -205,6 +558,11 @@ async function updateEntry(id, entryData, mediaBlob = null) {
 
   entries[index] = entry;
   saveEntries(entries);
+
+  // Sync to cloud in background
+  syncEntryToCloud(entry, mediaBlob).catch(err => {
+    console.error('Background cloud sync failed:', err);
+  });
 
   return entry;
 }
@@ -220,6 +578,11 @@ async function deleteEntry(id) {
   const entries = getEntries();
   const filtered = entries.filter(e => e.id !== id);
   saveEntries(filtered);
+
+  // Delete from cloud in background
+  deleteEntryFromCloud(id).catch(err => {
+    console.error('Background cloud delete failed:', err);
+  });
 }
 
 /**
@@ -1465,6 +1828,14 @@ window.Storage = {
   getActiveLoadoutId,
   setActiveLoadoutId,
   getActiveLoadout,
+  // Cloud Sync
+  getCurrentUserId,
+  syncEntryToCloud,
+  syncAllToCloud,
+  syncFromCloud,
+  performFullSync,
+  syncProfileToCloud,
+  syncProfileFromCloud,
   // Constants
   MOCK_USERS,
   MOCK_ENTRIES,

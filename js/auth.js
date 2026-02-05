@@ -54,6 +54,15 @@ async function registerUser(email, password, username) {
 async function loginUser(email, password) {
   try {
     const userCredential = await firebaseAuth.signInWithEmailAndPassword(email, password);
+
+    // Trigger cloud sync after login (in background)
+    if (window.Storage && window.Storage.performFullSync) {
+      console.log('Starting cloud sync after login...');
+      window.Storage.performFullSync().catch(err => {
+        console.error('Post-login sync error:', err);
+      });
+    }
+
     return { success: true, user: userCredential.user };
   } catch (error) {
     console.error('Login error:', error);
@@ -161,6 +170,18 @@ function requireAuth() {
         window.location.href = 'login.html';
       } else {
         currentUser = user;
+
+        // Trigger cloud sync in background (only once per session)
+        const syncKey = 'latte_last_sync_session';
+        const lastSync = sessionStorage.getItem(syncKey);
+        if (!lastSync && window.Storage && window.Storage.performFullSync) {
+          sessionStorage.setItem(syncKey, Date.now().toString());
+          console.log('Starting cloud sync on page load...');
+          window.Storage.performFullSync().catch(err => {
+            console.error('Page load sync error:', err);
+          });
+        }
+
         resolve(user);
       }
     });

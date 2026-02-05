@@ -18,9 +18,21 @@ firebase.initializeApp(firebaseConfig);
 // Initialize services
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
+
+// Enable offline persistence for Firestore
+db.enablePersistence({ synchronizeTabs: true })
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore persistence failed: multiple tabs open');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore persistence not supported in this browser');
+    }
+  });
 
 // Export for use in other modules
 window.firebaseAuth = auth;
 window.firebaseDb = db;
+window.firebaseStorage = storage;
 
-console.log('Firebase initialized');
+console.log('Firebase initialized with Firestore and Storage');
