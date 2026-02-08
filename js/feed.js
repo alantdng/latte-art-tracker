@@ -213,8 +213,8 @@ async function renderFeed(filter = {}) {
 /**
  * Update filter dropdowns
  */
-function updateFilters() {
-  const locations = Storage.getFeedLocations();
+async function updateFilters() {
+  const locations = await Storage.getFeedLocations();
 
   const countrySelect = document.getElementById('filter-country');
   if (countrySelect) {
@@ -245,7 +245,7 @@ function getFilterValues() {
  * Initialize feed page
  */
 async function initFeed() {
-  updateFilters();
+  await updateFilters();
   await renderFeed();
 
   // Set up filter change handlers

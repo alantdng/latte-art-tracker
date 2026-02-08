@@ -1366,8 +1366,8 @@ async function getCommunityFeed(filter = {}) {
 /**
  * Get unique locations from feed
  */
-function getFeedLocations() {
-  const feed = getCommunityFeed();
+async function getFeedLocations() {
+  const feed = await getCommunityFeed();
   const locations = {
     countries: new Set(),
     states: new Set(),
@@ -1375,7 +1375,7 @@ function getFeedLocations() {
   };
 
   feed.forEach(entry => {
-    if (entry.user.location) {
+    if (entry.user?.location) {
       if (entry.user.location.country) locations.countries.add(entry.user.location.country);
       if (entry.user.location.state) locations.states.add(entry.user.location.state);
       if (entry.user.location.city) locations.cities.add(entry.user.location.city);
