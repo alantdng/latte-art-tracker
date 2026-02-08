@@ -846,6 +846,40 @@ function saveProfile(profile) {
 }
 
 /**
+ * Save profile picture (as base64)
+ */
+async function saveProfilePicture(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const profile = getProfile();
+      profile.picture = reader.result;
+      saveProfile(profile);
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Get profile picture
+ */
+function getProfilePicture() {
+  const profile = getProfile();
+  return profile.picture || null;
+}
+
+/**
+ * Remove profile picture
+ */
+function removeProfilePicture() {
+  const profile = getProfile();
+  delete profile.picture;
+  saveProfile(profile);
+}
+
+/**
  * Get following list
  */
 function getFollowing() {
@@ -1875,6 +1909,9 @@ window.Storage = {
   saveSettings,
   getProfile,
   saveProfile,
+  saveProfilePicture,
+  getProfilePicture,
+  removeProfilePicture,
   getFollowing,
   followUser,
   unfollowUser,

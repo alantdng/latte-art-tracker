@@ -240,35 +240,9 @@ function setRating(value) {
 function validateForm() {
   const errors = [];
 
-  // Always required: photo and pattern
+  // Only photo is required - everything else is optional
   if (!currentMedia && !editingId) {
     errors.push('Please select a photo or video.');
-  }
-
-  if (!getDropdownValue('artPattern')) {
-    errors.push('Art pattern is required.');
-  }
-
-  // Additional validations only in full mode (not quick log mode)
-  if (!isQuickLogMode) {
-    if (!getDropdownValue('milkType')) {
-      errors.push('Milk type is required.');
-    }
-
-    const cupVolume = document.getElementById('cupVolume').value;
-    if (!cupVolume || cupVolume <= 0) {
-      errors.push('Cup volume must be a positive number.');
-    }
-
-    const espresso = document.getElementById('espressoGrams').value;
-    if (!espresso || espresso <= 0) {
-      errors.push('Espresso weight must be a positive number.');
-    }
-
-    const milkTemp = document.getElementById('milkTemp').value;
-    if (!milkTemp || milkTemp <= 0) {
-      errors.push('Milk temperature is required.');
-    }
   }
 
   return errors;

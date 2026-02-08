@@ -293,6 +293,43 @@ function setupHamburgerMenu() {
 }
 
 /**
+ * Resize image to specified dimensions
+ */
+async function resizeImage(file, maxWidth, maxHeight) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      // Calculate new dimensions maintaining aspect ratio
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round(height * maxWidth / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round(width * maxHeight / height);
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(resolve, 'image/jpeg', 0.8);
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
  * Initialize profile page
  */
 function initProfilePage() {
@@ -307,6 +344,62 @@ function initProfilePage() {
   document.getElementById('profileCity').value = profile.location?.city || '';
   document.getElementById('profileState').value = profile.location?.state || '';
   document.getElementById('profileCountry').value = profile.location?.country || '';
+
+  // Load profile picture
+  const picturePreview = document.getElementById('profile-picture-preview');
+  const profileInitial = document.getElementById('profile-initial');
+  const uploadBtn = document.getElementById('upload-photo-btn');
+  const removeBtn = document.getElementById('remove-photo-btn');
+  const pictureInput = document.getElementById('profile-picture-input');
+
+  function updateProfilePictureDisplay() {
+    const picture = Storage.getProfilePicture();
+    const name = profile.name || profile.email || 'U';
+
+    if (picture) {
+      picturePreview.innerHTML = `<img src="${picture}" alt="Profile picture">`;
+      removeBtn.style.display = 'inline-block';
+    } else {
+      picturePreview.innerHTML = `<span id="profile-initial">${name.charAt(0).toUpperCase()}</span>`;
+      removeBtn.style.display = 'none';
+    }
+  }
+
+  updateProfilePictureDisplay();
+
+  // Handle upload button click
+  uploadBtn?.addEventListener('click', () => {
+    pictureInput?.click();
+  });
+
+  // Handle file selection
+  pictureInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be less than 2MB');
+      return;
+    }
+
+    // Resize and save
+    const resizedBlob = await resizeImage(file, 200, 200);
+    await Storage.saveProfilePicture(resizedBlob);
+    updateProfilePictureDisplay();
+  });
+
+  // Handle remove button click
+  removeBtn?.addEventListener('click', () => {
+    Storage.removeProfilePicture();
+    updateProfilePictureDisplay();
+  });
 
   // Load equipment values
   const machineBrandSelect = document.getElementById('machineBrand');

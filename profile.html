@@ -43,6 +43,23 @@
       <!-- Profile Info -->
       <section class="form-section">
         <h2>Your Profile</h2>
+
+        <!-- Profile Picture -->
+        <div class="profile-picture-section">
+          <div class="profile-picture-preview" id="profile-picture-preview">
+            <span id="profile-initial"></span>
+          </div>
+          <div class="profile-picture-actions">
+            <input type="file" id="profile-picture-input" class="profile-picture-input" accept="image/*">
+            <button type="button" class="btn btn-secondary btn-small btn-upload-photo" id="upload-photo-btn">
+              Upload Photo
+            </button>
+            <button type="button" class="btn btn-link btn-small" id="remove-photo-btn" style="display: none;">
+              Remove
+            </button>
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="profileName">Display Name</label>
           <input type="text" id="profileName" placeholder="How you'll appear to others">
@@ -214,10 +231,12 @@
       const userInfo = document.getElementById('user-info');
       if (userInfo && user) {
         userInfo.innerHTML = `
-          <div class="menu-user">
-            <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
-            <span class="user-name">${user.displayName || user.email}</span>
-          </div>
+          <a href="profile.html" class="menu-user-link">
+            <div class="menu-user">
+              <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
+              <span class="user-name">${user.displayName || user.email}</span>
+            </div>
+          </a>
         `;
       }
     });

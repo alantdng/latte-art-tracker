@@ -99,10 +99,12 @@
 
         if (userInfo) {
           userInfo.innerHTML = `
-            <div class="menu-user">
-              <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
-              <span class="user-name">${user.displayName || user.email}</span>
-            </div>
+            <a href="profile.html" class="menu-user-link">
+              <div class="menu-user">
+                <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
+                <span class="user-name">${user.displayName || user.email}</span>
+              </div>
+            </a>
           `;
         }
       } else {

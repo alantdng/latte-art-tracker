@@ -9,7 +9,7 @@
 <body>
   <header class="header">
     <div class="header-content">
-      <h1 class="logo">Latte'd</h1>
+      <a href="index.html" class="logo-link"><h1 class="logo">Latte'd</h1></a>
       <nav class="nav-tabs">
         <a href="index.html" class="nav-tab active">Feed</a>
         <a href="my-lattes.html" class="nav-tab">My Lattes</a>
@@ -103,10 +103,12 @@
 
         if (userInfo) {
           userInfo.innerHTML = `
-            <div class="menu-user">
-              <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
-              <span class="user-name">${user.displayName || user.email}</span>
-            </div>
+            <a href="profile.html" class="menu-user-link">
+              <div class="menu-user">
+                <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
+                <span class="user-name">${user.displayName || user.email}</span>
+              </div>
+            </a>
           `;
         }
       } else {
