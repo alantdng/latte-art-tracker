@@ -1,3 +1,4 @@
+console.log('storage.js loading...');
 /**
  * Storage module for Latte'd app
  * Handles IndexedDB for media blobs and localStorage for metadata
@@ -17,6 +18,8 @@ const LOADOUTS_KEY = 'latte_loadouts';
 const ACTIVE_LOADOUT_KEY = 'latte_active_loadout';
 const SAVED_COMMENTS_KEY = 'latte_saved_comments';
 const REPORTED_COMMENTS_KEY = 'latte_reported_comments';
+const SMART_DEFAULTS_KEY = 'latte_smart_defaults';
+const ENTRY_DRAFT_KEY = 'latte_entry_draft';
 
 let idb = null;
 
@@ -516,6 +519,12 @@ async function createEntry(entryData, mediaBlob) {
   const entries = getEntries();
   entries.unshift(entry);
   saveEntries(entries);
+
+  // Save smart defaults for next time
+  saveSmartDefaults(entryData);
+
+  // Clear any saved draft
+  clearEntryDraft();
 
   // Sync to cloud in background (don't await to avoid blocking)
   syncEntryToCloud(entry, mediaBlob).catch(err => {
@@ -1764,6 +1773,94 @@ function getActiveLoadout() {
   return id ? getLoadout(id) : null;
 }
 
+// ==========================================
+// Smart Defaults Functions
+// ==========================================
+
+/**
+ * Get smart defaults (last-used values)
+ */
+function getSmartDefaults() {
+  const data = localStorage.getItem(SMART_DEFAULTS_KEY);
+  return data ? JSON.parse(data) : {};
+}
+
+/**
+ * Save smart defaults after creating/updating an entry
+ */
+function saveSmartDefaults(entryData) {
+  const defaults = {
+    milkType: entryData.params.milkType || '',
+    milkPitcher: entryData.params.milkPitcher || '',
+    spoutTip: entryData.params.spoutTip || '',
+    cupType: entryData.params.cupType || '',
+    cupVolumeMl: entryData.params.cupVolumeMl || '',
+    espressoGrams: entryData.params.espressoGrams || '',
+    milkTempF: entryData.params.milkTempF || '',
+    aerationTimeSec: entryData.params.aerationTimeSec || '',
+    integrationTimeSec: entryData.params.integrationTimeSec || '',
+    beanBrand: entryData.beans?.brand || '',
+    beanName: entryData.beans?.name || '',
+    isPublic: entryData.isPublic !== undefined ? entryData.isPublic : true,
+    updatedAt: Date.now()
+  };
+  localStorage.setItem(SMART_DEFAULTS_KEY, JSON.stringify(defaults));
+}
+
+/**
+ * Clear smart defaults
+ */
+function clearSmartDefaults() {
+  localStorage.removeItem(SMART_DEFAULTS_KEY);
+}
+
+// ==========================================
+// Draft Functions (for unsaved form data)
+// ==========================================
+
+/**
+ * Save entry draft
+ */
+function saveEntryDraft(draftData) {
+  const draft = {
+    ...draftData,
+    savedAt: Date.now()
+  };
+  localStorage.setItem(ENTRY_DRAFT_KEY, JSON.stringify(draft));
+}
+
+/**
+ * Get entry draft
+ */
+function getEntryDraft() {
+  const data = localStorage.getItem(ENTRY_DRAFT_KEY);
+  if (!data) return null;
+
+  const draft = JSON.parse(data);
+
+  // Expire drafts older than 24 hours
+  if (Date.now() - draft.savedAt > 24 * 60 * 60 * 1000) {
+    clearEntryDraft();
+    return null;
+  }
+
+  return draft;
+}
+
+/**
+ * Clear entry draft
+ */
+function clearEntryDraft() {
+  localStorage.removeItem(ENTRY_DRAFT_KEY);
+}
+
+/**
+ * Check if a draft exists
+ */
+function hasEntryDraft() {
+  return !!getEntryDraft();
+}
+
 // Export for use in other modules
 window.Storage = {
   initDB,
@@ -1836,6 +1933,15 @@ window.Storage = {
   performFullSync,
   syncProfileToCloud,
   syncProfileFromCloud,
+  // Smart Defaults
+  getSmartDefaults,
+  saveSmartDefaults,
+  clearSmartDefaults,
+  // Draft
+  saveEntryDraft,
+  getEntryDraft,
+  clearEntryDraft,
+  hasEntryDraft,
   // Constants
   MOCK_USERS,
   MOCK_ENTRIES,

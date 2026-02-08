@@ -1,3 +1,4 @@
+console.log('entry-form.js loading...');
 /**
  * Entry form module for Latte'd app
  * Handles form rendering, validation, and submission
@@ -20,6 +21,8 @@ let currentMediaType = null;
 let editingId = null;
 let currentRating = 0;
 let editingLoadoutId = null;
+let isQuickLogMode = true; // Default to quick log mode
+let formIsDirty = false; // Track if form has unsaved changes
 
 /**
  * Set up dropdown with custom input toggle
@@ -237,31 +240,35 @@ function setRating(value) {
 function validateForm() {
   const errors = [];
 
+  // Always required: photo and pattern
   if (!currentMedia && !editingId) {
     errors.push('Please select a photo or video.');
-  }
-
-  if (!getDropdownValue('milkType')) {
-    errors.push('Milk type is required.');
   }
 
   if (!getDropdownValue('artPattern')) {
     errors.push('Art pattern is required.');
   }
 
-  const cupVolume = document.getElementById('cupVolume').value;
-  if (!cupVolume || cupVolume <= 0) {
-    errors.push('Cup volume must be a positive number.');
-  }
+  // Additional validations only in full mode (not quick log mode)
+  if (!isQuickLogMode) {
+    if (!getDropdownValue('milkType')) {
+      errors.push('Milk type is required.');
+    }
 
-  const espresso = document.getElementById('espressoGrams').value;
-  if (!espresso || espresso <= 0) {
-    errors.push('Espresso weight must be a positive number.');
-  }
+    const cupVolume = document.getElementById('cupVolume').value;
+    if (!cupVolume || cupVolume <= 0) {
+      errors.push('Cup volume must be a positive number.');
+    }
 
-  const milkTemp = document.getElementById('milkTemp').value;
-  if (!milkTemp || milkTemp <= 0) {
-    errors.push('Milk temperature is required.');
+    const espresso = document.getElementById('espressoGrams').value;
+    if (!espresso || espresso <= 0) {
+      errors.push('Espresso weight must be a positive number.');
+    }
+
+    const milkTemp = document.getElementById('milkTemp').value;
+    if (!milkTemp || milkTemp <= 0) {
+      errors.push('Milk temperature is required.');
+    }
   }
 
   return errors;
@@ -350,6 +357,10 @@ async function handleSubmit(e) {
     } else {
       await Storage.createEntry(formData, currentMedia);
     }
+
+    // Clear form dirty state to prevent warning on navigation
+    formIsDirty = false;
+    Storage.clearEntryDraft();
 
     window.location.href = 'my-lattes.html';
   } catch (err) {
@@ -803,6 +814,323 @@ function updateUnitLabels() {
   if (weightUnit) weightUnit.textContent = settings.weightUnit;
 }
 
+// ==========================================
+// Quick Log Mode Functions
+// ==========================================
+
+/**
+ * Toggle quick log mode (simplified form)
+ */
+function toggleQuickLogMode(enabled) {
+  isQuickLogMode = enabled;
+  const advancedSections = document.querySelectorAll('.advanced-section');
+  const toggleBtn = document.getElementById('toggle-quick-log');
+
+  advancedSections.forEach(section => {
+    if (enabled) {
+      section.classList.add('hidden');
+    } else {
+      section.classList.remove('hidden');
+    }
+  });
+
+  if (toggleBtn) {
+    toggleBtn.textContent = enabled ? 'Show All Fields' : 'Quick Log Mode';
+    toggleBtn.classList.toggle('active', !enabled);
+  }
+
+  // Save preference
+  localStorage.setItem('latte_quick_log_mode', enabled ? 'true' : 'false');
+}
+
+/**
+ * Get quick log mode preference
+ */
+function getQuickLogPreference() {
+  const pref = localStorage.getItem('latte_quick_log_mode');
+  // Default to true (quick mode) if not set
+  return pref === null ? true : pref === 'true';
+}
+
+// ==========================================
+// Smart Defaults Functions
+// ==========================================
+
+/**
+ * Apply smart defaults to the form (last-used values)
+ */
+function applySmartDefaults() {
+  console.log('Applying smart defaults...');
+  const defaults = Storage.getSmartDefaults();
+  console.log('Smart defaults:', defaults);
+  if (!defaults || Object.keys(defaults).length === 0) {
+    console.log('No smart defaults found');
+    return;
+  }
+
+  const settings = Storage.getSettings();
+
+  // Apply values
+  if (defaults.milkType) {
+    setDropdownValue('milkType', defaults.milkType, MILK_TYPES);
+  }
+  if (defaults.milkPitcher) {
+    setDropdownValue('milkPitcher', defaults.milkPitcher, PITCHER_SIZES);
+  }
+  if (defaults.cupType) {
+    setDropdownValue('cupType', defaults.cupType, CUP_TYPES);
+  }
+
+  // Spout tip
+  const spoutTipSelect = document.getElementById('spoutTip');
+  if (spoutTipSelect && defaults.spoutTip) {
+    spoutTipSelect.value = defaults.spoutTip;
+  }
+
+  // Numeric values - convert from storage units if needed
+  if (defaults.cupVolumeMl) {
+    let cupVolume = defaults.cupVolumeMl;
+    if (settings.volumeUnit === 'oz') {
+      cupVolume = Storage.convertVolume(cupVolume, 'ml', 'oz');
+    }
+    document.getElementById('cupVolume').value = cupVolume;
+  }
+
+  if (defaults.espressoGrams) {
+    let espresso = defaults.espressoGrams;
+    if (settings.weightUnit === 'oz') {
+      espresso = Storage.convertWeight(espresso, 'g', 'oz');
+    }
+    document.getElementById('espressoGrams').value = espresso;
+  }
+
+  if (defaults.milkTempF) {
+    let temp = defaults.milkTempF;
+    if (settings.tempUnit === 'C') {
+      temp = Storage.convertTemp(temp, 'F', 'C');
+    }
+    document.getElementById('milkTemp').value = temp;
+  }
+
+  if (defaults.aerationTimeSec) {
+    document.getElementById('aerationTime').value = defaults.aerationTimeSec;
+  }
+
+  if (defaults.integrationTimeSec) {
+    document.getElementById('integrationTime').value = defaults.integrationTimeSec;
+  }
+
+  // Beans
+  if (defaults.beanBrand) {
+    setDropdownValue('beanBrand', defaults.beanBrand, BEAN_BRANDS);
+  }
+  if (defaults.beanName) {
+    document.getElementById('beanName').value = defaults.beanName;
+  }
+
+  // Public setting
+  if (defaults.isPublic !== undefined) {
+    const isPublicCheckbox = document.getElementById('isPublic');
+    if (isPublicCheckbox) {
+      isPublicCheckbox.checked = defaults.isPublic;
+    }
+  }
+}
+
+// ==========================================
+// Draft Safety Functions
+// ==========================================
+
+/**
+ * Mark form as dirty (has unsaved changes)
+ */
+function markFormDirty() {
+  formIsDirty = true;
+  saveDraftDebounced();
+}
+
+/**
+ * Debounced draft saving (every 2 seconds if dirty)
+ */
+let draftSaveTimeout = null;
+function saveDraftDebounced() {
+  if (draftSaveTimeout) {
+    clearTimeout(draftSaveTimeout);
+  }
+  draftSaveTimeout = setTimeout(() => {
+    saveDraft();
+  }, 2000);
+}
+
+/**
+ * Save current form state as draft
+ */
+function saveDraft() {
+  if (editingId) return; // Don't save drafts when editing
+
+  const draft = {
+    mediaType: currentMediaType,
+    hasMedia: !!currentMedia,
+    artPattern: getDropdownValue('artPattern'),
+    rating: currentRating,
+    milkType: getDropdownValue('milkType'),
+    milkPitcher: getDropdownValue('milkPitcher'),
+    spoutTip: document.getElementById('spoutTip')?.value || '',
+    cupType: getDropdownValue('cupType'),
+    cupVolume: document.getElementById('cupVolume')?.value || '',
+    espressoGrams: document.getElementById('espressoGrams')?.value || '',
+    milkTemp: document.getElementById('milkTemp')?.value || '',
+    aerationTime: document.getElementById('aerationTime')?.value || '',
+    integrationTime: document.getElementById('integrationTime')?.value || '',
+    beanBrand: getDropdownValue('beanBrand'),
+    beanName: document.getElementById('beanName')?.value || '',
+    notes: document.getElementById('notes')?.value || '',
+    isPublic: document.getElementById('isPublic')?.checked || false
+  };
+
+  Storage.saveEntryDraft(draft);
+}
+
+/**
+ * Restore form from saved draft
+ */
+function restoreDraft() {
+  const draft = Storage.getEntryDraft();
+  if (!draft) return false;
+
+  // Restore values
+  if (draft.artPattern) {
+    setDropdownValue('artPattern', draft.artPattern, ART_PATTERNS);
+  }
+  if (draft.rating) {
+    setRating(draft.rating);
+  }
+  if (draft.milkType) {
+    setDropdownValue('milkType', draft.milkType, MILK_TYPES);
+  }
+  if (draft.milkPitcher) {
+    setDropdownValue('milkPitcher', draft.milkPitcher, PITCHER_SIZES);
+  }
+  if (draft.spoutTip) {
+    const spoutTipSelect = document.getElementById('spoutTip');
+    if (spoutTipSelect) spoutTipSelect.value = draft.spoutTip;
+  }
+  if (draft.cupType) {
+    setDropdownValue('cupType', draft.cupType, CUP_TYPES);
+  }
+  if (draft.cupVolume) {
+    document.getElementById('cupVolume').value = draft.cupVolume;
+  }
+  if (draft.espressoGrams) {
+    document.getElementById('espressoGrams').value = draft.espressoGrams;
+  }
+  if (draft.milkTemp) {
+    document.getElementById('milkTemp').value = draft.milkTemp;
+  }
+  if (draft.aerationTime) {
+    document.getElementById('aerationTime').value = draft.aerationTime;
+  }
+  if (draft.integrationTime) {
+    document.getElementById('integrationTime').value = draft.integrationTime;
+  }
+  if (draft.beanBrand) {
+    setDropdownValue('beanBrand', draft.beanBrand, BEAN_BRANDS);
+  }
+  if (draft.beanName) {
+    document.getElementById('beanName').value = draft.beanName;
+  }
+  if (draft.notes) {
+    document.getElementById('notes').value = draft.notes;
+  }
+  if (draft.isPublic !== undefined) {
+    const isPublicCheckbox = document.getElementById('isPublic');
+    if (isPublicCheckbox) isPublicCheckbox.checked = draft.isPublic;
+  }
+
+  formIsDirty = true;
+  return true;
+}
+
+/**
+ * Set up draft safety (warn on navigation with unsaved changes)
+ */
+function setupDraftSafety() {
+  // Track form changes
+  const form = document.getElementById('entry-form');
+  if (form) {
+    form.addEventListener('input', markFormDirty);
+    form.addEventListener('change', markFormDirty);
+  }
+
+  // Warn on page unload
+  window.addEventListener('beforeunload', (e) => {
+    if (formIsDirty && !editingId) {
+      e.preventDefault();
+      e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      return e.returnValue;
+    }
+  });
+
+  // Intercept back/cancel links
+  const backLink = document.querySelector('.back-link');
+  const cancelBtn = document.querySelector('.form-actions .btn-secondary');
+
+  [backLink, cancelBtn].forEach(el => {
+    if (el) {
+      el.addEventListener('click', (e) => {
+        if (formIsDirty && !editingId) {
+          e.preventDefault();
+          showDiscardDraftDialog(el.href || 'index.html');
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Show discard draft confirmation dialog
+ */
+function showDiscardDraftDialog(redirectUrl) {
+  // Check if modal already exists
+  let modal = document.getElementById('discard-draft-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'discard-draft-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-dialog discard-draft-dialog">
+        <h2>Discard draft?</h2>
+        <p>You have unsaved changes. Would you like to keep your draft or discard it?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="keep-draft-btn">Keep Editing</button>
+          <button type="button" class="btn btn-danger" id="discard-draft-btn">Discard</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  modal.classList.remove('hidden');
+
+  // Handle buttons
+  document.getElementById('keep-draft-btn').onclick = () => {
+    modal.classList.add('hidden');
+  };
+
+  document.getElementById('discard-draft-btn').onclick = () => {
+    Storage.clearEntryDraft();
+    formIsDirty = false;
+    window.location.href = redirectUrl;
+  };
+
+  // Close on backdrop click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  };
+}
+
 /**
  * Set up hamburger menu
  */
@@ -839,6 +1167,8 @@ function setupHamburgerMenu() {
  * Initialize entry form
  */
 function initEntryForm() {
+  console.log('Initializing entry form...');
+
   // Set up hamburger menu
   setupHamburgerMenu();
 
@@ -852,15 +1182,35 @@ function initEntryForm() {
   populateLoadoutDropdown();
   setupLoadoutHandlers();
 
-  // Apply active loadout if one is set (only for new entries)
+  // Check if editing
   const params = new URLSearchParams(window.location.search);
   const editId = params.get('edit');
+
   if (!editId) {
+    // New entry - check for draft first
+    const hasDraft = Storage.hasEntryDraft();
     const activeLoadout = Storage.getActiveLoadout();
-    if (activeLoadout) {
+
+    if (hasDraft) {
+      // Offer to restore draft
+      const restored = restoreDraft();
+      if (restored) {
+        console.log('Draft restored');
+      }
+    } else if (activeLoadout) {
+      // Apply active loadout
       applyLoadout(activeLoadout.id);
+    } else {
+      // Apply smart defaults (last-used values)
+      applySmartDefaults();
     }
   }
+
+  // Set up quick log mode
+  setupQuickLogMode();
+
+  // Set up draft safety
+  setupDraftSafety();
 
   // Set up rating input
   setupRatingInput();
@@ -898,7 +1248,43 @@ function initEntryForm() {
   // Check if editing (editId already defined above)
   if (editId) {
     loadEntryForEdit(editId);
+    // Disable quick log mode when editing
+    toggleQuickLogMode(false);
   }
+}
+
+/**
+ * Set up quick log mode toggle
+ */
+function setupQuickLogMode() {
+  console.log('Setting up quick log mode...');
+
+  // Add toggle button if not exists
+  let toggleBtn = document.getElementById('toggle-quick-log');
+  if (!toggleBtn) {
+    const formActions = document.querySelector('.form-actions');
+    console.log('Form actions element:', formActions);
+    if (formActions) {
+      toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.id = 'toggle-quick-log';
+      toggleBtn.className = 'btn btn-link toggle-quick-log';
+      toggleBtn.textContent = 'Show All Fields';
+      formActions.insertBefore(toggleBtn, formActions.firstChild);
+      console.log('Quick log toggle button created');
+    }
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      toggleQuickLogMode(!isQuickLogMode);
+    });
+  }
+
+  // Apply saved preference
+  const savedPref = getQuickLogPreference();
+  console.log('Quick log mode preference:', savedPref);
+  toggleQuickLogMode(savedPref);
 }
 
 // Export

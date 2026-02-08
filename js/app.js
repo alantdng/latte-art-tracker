@@ -7,12 +7,16 @@
  * Initialize the app based on current page
  */
 async function initApp() {
+  console.log('initApp called');
   try {
     await Storage.initDB();
+    console.log('Storage initialized');
 
     const path = window.location.pathname;
+    console.log('Current path:', path);
 
     if (path.endsWith('entry.html')) {
+      console.log('On entry page, EntryForm defined:', typeof EntryForm !== 'undefined');
       if (typeof EntryForm !== 'undefined') EntryForm.init();
     } else if (path.endsWith('detail.html')) {
       initDetailPage();
@@ -482,4 +486,10 @@ function renderFollowingList() {
 }
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', initApp);
+console.log('app.js loaded, readyState:', document.readyState);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  // DOM already loaded
+  initApp();
+}

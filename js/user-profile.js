@@ -119,6 +119,11 @@ async function initUserProfile() {
       followBtn.textContent = isFollowing ? 'Following' : 'Follow';
 
       followBtn.addEventListener('click', () => {
+        // Check if user is logged in
+        if (!Auth.requireAuthForAction('follow users')) {
+          return;
+        }
+
         if (Storage.isFollowing(userId)) {
           Storage.unfollowUser(userId);
           followBtn.classList.remove('following');

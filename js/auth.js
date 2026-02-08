@@ -1,3 +1,4 @@
+console.log('auth.js loading...');
 /**
  * Authentication module for Latte'd
  * Handles user registration, login, logout, and auth state
@@ -189,6 +190,90 @@ function requireAuth() {
 }
 
 /**
+ * Optional auth - allows guest browsing but tracks auth state
+ * Returns user if logged in, null if guest
+ */
+function optionalAuth() {
+  return new Promise((resolve) => {
+    const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
+      unsubscribe();
+      currentUser = user;
+
+      // Trigger cloud sync if logged in
+      if (user) {
+        const syncKey = 'latte_last_sync_session';
+        const lastSync = sessionStorage.getItem(syncKey);
+        if (!lastSync && window.Storage && window.Storage.performFullSync) {
+          sessionStorage.setItem(syncKey, Date.now().toString());
+          window.Storage.performFullSync().catch(err => {
+            console.error('Page load sync error:', err);
+          });
+        }
+      }
+
+      resolve(user); // Returns null for guests, user object if logged in
+    });
+  });
+}
+
+/**
+ * Check if action requires auth and show login prompt if needed
+ * Returns true if user is logged in, false if guest (and shows prompt)
+ */
+function requireAuthForAction(actionName = 'do this') {
+  if (currentUser) {
+    return true;
+  }
+
+  // Show login prompt modal
+  showLoginPrompt(actionName);
+  return false;
+}
+
+/**
+ * Show login prompt modal for guests
+ */
+function showLoginPrompt(actionName = 'do this') {
+  // Check if modal already exists
+  let modal = document.getElementById('login-prompt-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'login-prompt-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-dialog login-prompt-dialog">
+        <div class="login-prompt-icon">☕</div>
+        <h2>Join the Community!</h2>
+        <p class="login-prompt-message">Create an account to <span id="login-prompt-action">${actionName}</span> and connect with other latte art enthusiasts.</p>
+        <div class="login-prompt-actions">
+          <a href="register.html" class="btn btn-primary btn-large">Sign Up Free</a>
+          <a href="login.html" class="btn btn-secondary">Already have an account? Log In</a>
+        </div>
+        <button class="btn-close-modal" id="close-login-prompt">&times;</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close button handler
+    document.getElementById('close-login-prompt').addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+  } else {
+    // Update the action text
+    document.getElementById('login-prompt-action').textContent = actionName;
+  }
+
+  modal.classList.remove('hidden');
+}
+
+/**
  * Redirect if already logged in (for login/register pages)
  */
 function redirectIfLoggedIn() {
@@ -229,6 +314,9 @@ window.Auth = {
   updateUserSettings,
   initAuthStateListener,
   requireAuth,
+  optionalAuth,
+  requireAuthForAction,
+  showLoginPrompt,
   redirectIfLoggedIn,
   sendPasswordReset
 };

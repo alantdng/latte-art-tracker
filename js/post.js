@@ -379,6 +379,11 @@ function setupCommentEventHandlers(container) {
  * Show reply form for a comment
  */
 function showReplyForm(commentId) {
+  // Check if user is logged in
+  if (!Auth.requireAuthForAction('reply to comments')) {
+    return;
+  }
+
   // Hide all reply forms first
   document.querySelectorAll('.comment-reply-form').forEach(f => f.classList.add('hidden'));
   // Hide action menus
@@ -439,6 +444,11 @@ function showEditForm(commentId) {
  */
 function handleReply(parentId, text) {
   if (!text) return;
+
+  // Check if user is logged in
+  if (!Auth.requireAuthForAction('reply to comments')) {
+    return;
+  }
 
   if (isMockEntry) {
     Storage.addMockComment(currentEntry.id, text, parentId);
@@ -582,6 +592,11 @@ function handleReportComment(commentId, btn) {
  * Handle vote on comment - updates vote without re-sorting
  */
 function handleVote(commentId, vote) {
+  // Check if user is logged in
+  if (!Auth.requireAuthForAction('vote on comments')) {
+    return;
+  }
+
   if (isMockEntry) {
     Storage.voteMockComment(currentEntry.id, commentId, vote);
   } else {
@@ -620,6 +635,11 @@ function handleVote(commentId, vote) {
  * Submit a new comment
  */
 function submitComment() {
+  // Check if user is logged in
+  if (!Auth.requireAuthForAction('post comments')) {
+    return;
+  }
+
   const input = document.getElementById('comment-input');
   const text = input.value.trim();
 
@@ -715,6 +735,11 @@ async function initPostPage() {
       followBtn.textContent = isFollowing ? 'Following' : 'Follow';
 
       followBtn.addEventListener('click', () => {
+        // Check if user is logged in
+        if (!Auth.requireAuthForAction('follow users')) {
+          return;
+        }
+
         if (Storage.isFollowing(currentEntry.user.id)) {
           Storage.unfollowUser(currentEntry.user.id);
           followBtn.classList.remove('following');

@@ -12,13 +12,18 @@
       <a href="index.html" class="back-link">← Back</a>
       <h1 class="page-title">Post</h1>
       <div class="header-actions">
-        <!-- Notification Icon -->
-        <a href="notifications.html" class="notif-icon-wrapper" aria-label="Notifications">
+        <!-- Notification Icon (hidden for guests) -->
+        <a href="notifications.html" class="notif-icon-wrapper" id="notif-link" aria-label="Notifications" style="display: none;">
           <span class="notif-icon">☕</span>
           <span id="notif-badge" class="notif-badge hidden"></span>
         </a>
-        <!-- Hamburger Menu -->
-        <div class="hamburger-wrapper">
+        <!-- Guest actions -->
+        <div id="guest-actions" class="guest-actions" style="display: none;">
+          <a href="login.html" class="btn btn-small btn-secondary">Log In</a>
+          <a href="register.html" class="btn btn-small btn-primary">Sign Up</a>
+        </div>
+        <!-- Hamburger Menu (for logged in users) -->
+        <div class="hamburger-wrapper" id="hamburger-wrapper" style="display: none;">
           <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
             <span class="hamburger-line"></span>
             <span class="hamburger-line"></span>
@@ -105,23 +110,54 @@
   <script src="js/post.js"></script>
   <script src="js/app.js"></script>
   <script>
-    Auth.requireAuth().then((user) => {
+    // Optional auth - allows guest viewing
+    Auth.optionalAuth().then((user) => {
       const userInfo = document.getElementById('user-info');
-      if (userInfo && user) {
-        userInfo.innerHTML = `
-          <div class="menu-user">
-            <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
-            <span class="user-name">${user.displayName || user.email}</span>
-          </div>
-        `;
+      const guestActions = document.getElementById('guest-actions');
+      const hamburgerWrapper = document.getElementById('hamburger-wrapper');
+      const notifLink = document.getElementById('notif-link');
+      const commentForm = document.getElementById('main-comment-form');
+
+      if (user) {
+        // Logged in user
+        hamburgerWrapper.style.display = 'block';
+        notifLink.style.display = 'flex';
+        guestActions.style.display = 'none';
+
+        if (userInfo) {
+          userInfo.innerHTML = `
+            <div class="menu-user">
+              <div class="user-avatar-small">${(user.displayName || user.email)[0].toUpperCase()}</div>
+              <span class="user-name">${user.displayName || user.email}</span>
+            </div>
+          `;
+        }
+      } else {
+        // Guest user
+        hamburgerWrapper.style.display = 'none';
+        notifLink.style.display = 'none';
+        guestActions.style.display = 'flex';
+
+        // Replace comment form with login prompt for guests
+        if (commentForm) {
+          commentForm.innerHTML = `
+            <div class="guest-comment-prompt">
+              <p>Want to join the conversation?</p>
+              <a href="register.html" class="btn btn-primary btn-small">Sign Up to Comment</a>
+            </div>
+          `;
+        }
       }
     });
 
-    document.getElementById('logout-btn').addEventListener('click', async (e) => {
-      e.preventDefault();
-      await Auth.logout();
-      window.location.href = 'login.html';
-    });
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await Auth.logout();
+        window.location.href = 'login.html';
+      });
+    }
   </script>
 </body>
 </html>

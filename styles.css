@@ -3203,3 +3203,364 @@ body {
     font-size: 1.5rem;
   }
 }
+
+/* ==========================================
+   Login Prompt Modal (for guests)
+   ========================================== */
+
+.login-prompt-dialog {
+  text-align: center;
+  max-width: 400px;
+  padding: var(--spacing-xl);
+}
+
+.login-prompt-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.login-prompt-dialog h2 {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+}
+
+.login-prompt-message {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.login-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.login-prompt-actions .btn {
+  width: 100%;
+}
+
+.login-prompt-actions .btn-secondary {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+}
+
+.login-prompt-actions .btn-secondary:hover {
+  text-decoration: underline;
+}
+
+.btn-close-modal {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.btn-close-modal:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+
+/* ==========================================
+   Quick Log Mode Styles
+   ========================================== */
+
+.quick-log-form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.quick-log-section {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-log-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text);
+}
+
+.pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.pattern-option {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.pattern-option:hover {
+  border-color: var(--color-primary-light);
+  background: var(--color-accent);
+}
+
+.pattern-option.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+
+.rating-quick {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.rating-quick .star-btn {
+  font-size: 2rem;
+  padding: var(--spacing-xs);
+}
+
+.skip-rating-btn {
+  display: block;
+  margin: var(--spacing-sm) auto 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.skip-rating-btn:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.more-options-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-md);
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.more-options-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.more-options-toggle .toggle-icon {
+  transition: transform 0.2s ease;
+}
+
+.more-options-toggle.expanded .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.more-options-content {
+  display: none;
+}
+
+.more-options-content.expanded {
+  display: block;
+}
+
+.quick-log-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.quick-log-actions .btn {
+  flex: 1;
+}
+
+/* Draft warning modal */
+.draft-warning-dialog {
+  max-width: 350px;
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.draft-warning-dialog h3 {
+  margin-bottom: var(--spacing-sm);
+}
+
+.draft-warning-dialog p {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.draft-warning-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.draft-warning-actions .btn {
+  flex: 1;
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #a32828;
+}
+
+/* ==========================================
+   Quick Log Mode & Draft Safety
+   ========================================== */
+
+/* Quick Log Toggle Button */
+.toggle-quick-log {
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.toggle-quick-log:hover {
+  text-decoration: underline;
+}
+
+.toggle-quick-log.active {
+  color: var(--color-text-muted);
+}
+
+/* Hide advanced sections in quick log mode */
+.advanced-section.hidden {
+  display: none;
+}
+
+/* Discard Draft Modal */
+.discard-draft-dialog {
+  max-width: 380px;
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.discard-draft-dialog h2 {
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.25rem;
+}
+
+.discard-draft-dialog p {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.discard-draft-dialog .modal-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.discard-draft-dialog .modal-actions .btn {
+  flex: 1;
+  max-width: 150px;
+}
+
+/* Login Prompt Modal */
+.login-prompt-dialog {
+  text-align: center;
+  max-width: 400px;
+  padding: var(--spacing-xl);
+}
+
+.login-prompt-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.login-prompt-dialog h2 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-primary);
+}
+
+.login-prompt-message {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.login-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.login-prompt-actions .btn-large {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1rem;
+}
+
+.btn-close-modal {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.btn-close-modal:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+
+/* Guest Comment Prompt */
+.guest-comment-prompt {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background: var(--color-background);
+  border-radius: var(--radius-md);
+}
+
+.guest-comment-prompt p {
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-muted);
+}
+
+/* Guest Actions in Header */
+.guest-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.guest-actions .btn-small {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.875rem;
+}

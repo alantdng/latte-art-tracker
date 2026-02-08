@@ -173,6 +173,12 @@ function renderFeed(filter = {}) {
   container.querySelectorAll('.btn-follow').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+
+      // Check if user is logged in
+      if (!Auth.requireAuthForAction('follow users')) {
+        return;
+      }
+
       const userId = btn.dataset.userId;
 
       if (Storage.isFollowing(userId)) {
