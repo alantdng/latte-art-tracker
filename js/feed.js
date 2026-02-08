@@ -80,10 +80,16 @@ function renderStars(rating) {
 /**
  * Render the community feed
  */
-function renderFeed(filter = {}) {
+async function renderFeed(filter = {}) {
   const container = document.getElementById('feed-grid');
   const emptyState = document.getElementById('feed-empty');
-  const feed = Storage.getCommunityFeed(filter);
+
+  // Show loading state
+  container.innerHTML = '<div class="feed-loading">Loading feed...</div>';
+  container.style.display = 'grid';
+  emptyState.style.display = 'none';
+
+  const feed = await Storage.getCommunityFeed(filter);
   const settings = Storage.getSettings();
   const profile = Storage.getProfile();
 
@@ -97,7 +103,7 @@ function renderFeed(filter = {}) {
   emptyState.style.display = 'none';
 
   container.innerHTML = feed.map(entry => {
-    const thumbnail = entry.media.thumbnail || getPlaceholderImage(entry.id, entry.params.artPattern);
+    const thumbnail = entry.media.thumbnail || entry.media.cloudUrl || getPlaceholderImage(entry.id, entry.params?.artPattern || 'Latte');
     const location = formatLocation(entry.user.location);
     const timeAgo = formatRelativeTime(entry.createdAt);
     const isVideo = entry.media.type === 'video';
@@ -128,18 +134,18 @@ function renderFeed(filter = {}) {
           ` : ''}
         </div>
         <div class="feed-card-media">
-          <img src="${thumbnail}" alt="${entry.params.artPattern} latte art">
+          <img src="${thumbnail}" alt="${entry.params?.artPattern || 'Latte'} latte art">
           ${isVideo ? '<span class="video-badge">Video</span>' : ''}
         </div>
         <div class="feed-card-info">
           <div class="feed-pattern-row">
-            <h3 class="feed-pattern">${entry.params.artPattern}</h3>
+            <h3 class="feed-pattern">${entry.params?.artPattern || 'Latte Art'}</h3>
             ${entry.rating ? renderStars(entry.rating) : ''}
           </div>
           <div class="feed-params">
-            <span>${entry.params.milkType}</span>
-            <span>${Storage.formatTemp(entry.params.milkTempF, settings)}</span>
-            <span>${Storage.formatVolume(entry.params.cupVolumeMl, settings)}</span>
+            ${entry.params?.milkType ? `<span>${entry.params.milkType}</span>` : ''}
+            ${entry.params?.milkTempF ? `<span>${Storage.formatTemp(entry.params.milkTempF, settings)}</span>` : ''}
+            ${entry.params?.cupVolumeMl ? `<span>${Storage.formatVolume(entry.params.cupVolumeMl, settings)}</span>` : ''}
           </div>
           ${entry.beans ? `
             <div class="feed-beans">
@@ -238,16 +244,16 @@ function getFilterValues() {
 /**
  * Initialize feed page
  */
-function initFeed() {
+async function initFeed() {
   updateFilters();
-  renderFeed();
+  await renderFeed();
 
   // Set up filter change handlers
   ['filter-country', 'filter-pattern', 'filter-following'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('change', () => {
-        renderFeed(getFilterValues());
+      el.addEventListener('change', async () => {
+        await renderFeed(getFilterValues());
       });
     }
   });

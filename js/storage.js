@@ -241,6 +241,14 @@ async function syncEntryToCloud(entry, mediaBlob = null) {
       }
     }
 
+    // Sync to public feed if entry is public
+    if (entry.isPublic) {
+      await addToPublicFeed(entry, mediaUrl);
+    } else {
+      // Remove from public feed if it was previously public
+      await removeFromPublicFeed(entry.id);
+    }
+
     return true;
   } catch (error) {
     console.error('Error syncing entry to cloud:', error);
@@ -259,10 +267,138 @@ async function deleteEntryFromCloud(entryId) {
     const db = window.firebaseDb;
     await db.collection('users').doc(userId).collection('entries').doc(entryId).delete();
     await deleteMediaFromCloud(entryId);
+    // Also remove from public feed
+    await removeFromPublicFeed(entryId);
     console.log('Entry deleted from cloud:', entryId);
   } catch (error) {
     console.error('Error deleting entry from cloud:', error);
   }
+}
+
+// ==========================================
+// Public Feed Functions (Shared Community Feed)
+// ==========================================
+
+/**
+ * Add or update entry in the public feed
+ */
+async function addToPublicFeed(entry, mediaUrl) {
+  const userId = getCurrentUserId();
+  if (!userId) return false;
+
+  try {
+    const db = window.firebaseDb;
+    const profile = getProfile();
+
+    // Get Firebase user for display name
+    const firebaseUser = window.firebaseAuth?.currentUser;
+    const displayName = firebaseUser?.displayName || profile.name || 'Anonymous';
+
+    const publicEntry = {
+      id: entry.id,
+      odId: userId,
+      createdAt: entry.createdAt,
+      updatedAt: Date.now(),
+      media: {
+        type: entry.media.type,
+        cloudUrl: mediaUrl
+      },
+      params: entry.params || {},
+      beans: entry.beans || null,
+      rating: entry.rating || 0,
+      notes: entry.notes || '',
+      user: {
+        odId: userId,
+        name: displayName,
+        id: profile.id,
+        location: profile.location || null,
+        picture: profile.picture || null
+      }
+    };
+
+    await db.collection('publicFeed').doc(entry.id).set(publicEntry);
+    console.log('Entry added to public feed:', entry.id);
+    return true;
+  } catch (error) {
+    console.error('Error adding to public feed:', error);
+    return false;
+  }
+}
+
+/**
+ * Remove entry from the public feed
+ */
+async function removeFromPublicFeed(entryId) {
+  try {
+    const db = window.firebaseDb;
+    await db.collection('publicFeed').doc(entryId).delete();
+    console.log('Entry removed from public feed:', entryId);
+  } catch (error) {
+    // Ignore if entry doesn't exist in public feed
+    if (error.code !== 'not-found') {
+      console.error('Error removing from public feed:', error);
+    }
+  }
+}
+
+/**
+ * Fetch entries from the public feed
+ */
+async function fetchPublicFeed(options = {}) {
+  try {
+    const db = window.firebaseDb;
+    let query = db.collection('publicFeed')
+      .orderBy('createdAt', 'desc')
+      .limit(options.limit || 50);
+
+    // Apply filters
+    if (options.country) {
+      query = query.where('user.location.country', '==', options.country);
+    }
+    if (options.pattern) {
+      query = query.where('params.artPattern', '==', options.pattern);
+    }
+
+    const snapshot = await query.get();
+    const entries = [];
+
+    snapshot.forEach(doc => {
+      entries.push(doc.data());
+    });
+
+    console.log(`Fetched ${entries.length} entries from public feed`);
+    return entries;
+  } catch (error) {
+    console.error('Error fetching public feed:', error);
+    return [];
+  }
+}
+
+// Cache for public feed data
+let publicFeedCache = [];
+let publicFeedLastFetch = 0;
+const PUBLIC_FEED_CACHE_TTL = 30000; // 30 seconds
+
+/**
+ * Get public feed with caching
+ */
+async function getPublicFeedCached(forceRefresh = false) {
+  const now = Date.now();
+
+  if (!forceRefresh && publicFeedCache.length > 0 && (now - publicFeedLastFetch) < PUBLIC_FEED_CACHE_TTL) {
+    return publicFeedCache;
+  }
+
+  publicFeedCache = await fetchPublicFeed();
+  publicFeedLastFetch = now;
+  return publicFeedCache;
+}
+
+/**
+ * Refresh the public feed cache
+ */
+function refreshPublicFeedCache() {
+  publicFeedLastFetch = 0;
 }
 
 /**
@@ -1167,46 +1303,61 @@ const MOCK_ENTRIES = [
 ];
 
 /**
- * Get community feed (mock + public local entries)
+ * Get community feed (from Firestore public feed + mock entries as fallback)
  */
-function getCommunityFeed(filter = {}) {
+async function getCommunityFeed(filter = {}) {
   const profile = getProfile();
-  const localEntries = getEntries()
+
+  // Fetch real public entries from Firestore
+  let publicEntries = [];
+  try {
+    publicEntries = await getPublicFeedCached();
+  } catch (error) {
+    console.error('Error fetching public feed, using mock data:', error);
+  }
+
+  // Add mock entries as fallback/demo content if no real entries
+  let feed = publicEntries.length > 0 ? [...publicEntries] : [...MOCK_ENTRIES];
+
+  // Also include user's own public entries (in case they haven't synced yet)
+  const localPublicEntries = getEntries()
     .filter(e => e.isPublic)
+    .filter(e => !feed.some(f => f.id === e.id)) // Avoid duplicates
     .map(e => ({
       ...e,
       user: {
         id: profile.id,
+        odId: getCurrentUserId(),
         name: profile.name || 'You',
         location: profile.location
       }
     }));
 
-  let feed = [...MOCK_ENTRIES, ...localEntries];
+  feed = [...feed, ...localPublicEntries];
 
   // Sort by date
   feed.sort((a, b) => b.createdAt - a.createdAt);
 
   // Filter by location
   if (filter.country) {
-    feed = feed.filter(e => e.user.location?.country === filter.country);
+    feed = feed.filter(e => e.user?.location?.country === filter.country);
   }
   if (filter.state) {
-    feed = feed.filter(e => e.user.location?.state === filter.state);
+    feed = feed.filter(e => e.user?.location?.state === filter.state);
   }
   if (filter.city) {
-    feed = feed.filter(e => e.user.location?.city === filter.city);
+    feed = feed.filter(e => e.user?.location?.city === filter.city);
   }
 
   // Filter by pattern
   if (filter.pattern) {
-    feed = feed.filter(e => e.params.artPattern === filter.pattern);
+    feed = feed.filter(e => e.params?.artPattern === filter.pattern);
   }
 
   // Filter by following
   if (filter.following) {
     const following = getFollowing();
-    feed = feed.filter(e => following.includes(e.user.id));
+    feed = feed.filter(e => following.includes(e.user?.id) || following.includes(e.user?.odId));
   }
 
   return feed;
