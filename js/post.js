@@ -688,7 +688,7 @@ async function initPostPage() {
 
     isMockEntry = isMock;
 
-    const feed = Storage.getCommunityFeed();
+    const feed = await Storage.getCommunityFeed();
     currentEntry = feed.find(e => e.id === id);
 
     if (!currentEntry) {
